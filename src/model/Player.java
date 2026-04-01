@@ -17,7 +17,7 @@ public class Player {
     private String profilePicture; //base64
     private String nationality; // provavelmente vai ser em acrónimo
 
-    // Registo
+    // Registo (guardados no XML)
     private int totalWins = 0;
     private int totalLosses = 0;
     private long averageTimePerMatch;

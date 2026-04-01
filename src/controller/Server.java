@@ -19,7 +19,7 @@ public class Server {
 
     public final static int DEFAULT_PORT = 5025;
 
-    public void main(String[] args) {
+    public static void main(String[] args) {
 
         // try-with-resources: garante que o ServerSocket seja fechado automaticamente.
         try (ServerSocket serverSocket = new ServerSocket(DEFAULT_PORT)) {
@@ -47,7 +47,7 @@ public class Server {
     /**
      * servidor dedicado: contém toda a lógica de atendimento do cliente.
      */
-    private void handleClient(Socket connection) {
+    private static void handleClient(Socket connection) {
 
     }
 
