@@ -15,6 +15,7 @@ public class Server {
      * Decidir se usar concorrente vs iterativo
      *
      * Vai ter as regras do jogo, vai guardar as jogadas, etc (?)
+     * Talvez vá buscar estas coisas a classe Game / GameRoom (?)
      */
 
     public final static int DEFAULT_PORT = 5025;

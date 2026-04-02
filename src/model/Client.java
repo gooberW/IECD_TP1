@@ -11,6 +11,7 @@ public class Client {
      * Pode ser FAT ou THIN (ou uma mistura)
      * - FAT - Contém lógica de negócio
      * - THIN - Pouco código, chama maior parte ao servidor (lógica de negócio centralizada no servidor)
+     * - Acho melhor usar THIN
      */
 
     public final static String DEFAULT_HOST = "localhost";
