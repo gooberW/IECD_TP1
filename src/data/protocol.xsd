@@ -39,6 +39,8 @@
 
                 <xs:element name="status" type="xs:string"/>
 
+                <xs:element name="play" type="xs:string" fixed=""/>
+
                 <xs:element name="match">
                     <xs:complexType>
                         <xs:attribute name="start" type="xs:boolean" use="required"/>
@@ -58,9 +60,10 @@
 
                 <xs:element name="move">
                     <xs:complexType>
-                        <xs:attribute name="x" type="xs:integer" use="required"/>
-                        <xs:attribute name="y" type="xs:integer" use="required"/>
-                        <xs:attribute name="type" type="xs:string" use="required"/>
+                        <xs:attribute name="x1" type="xs:integer" use="required"/>
+                        <xs:attribute name="y1" type="xs:integer" use="required"/>
+                        <xs:attribute name="x2" type="xs:integer" use="required"/>
+                        <xs:attribute name="y2" type="xs:integer" use="required"/>
                     </xs:complexType>
                 </xs:element>
 

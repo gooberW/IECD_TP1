@@ -1,9 +1,22 @@
 package server;
 
 import model.GameRoom;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
+import utils.XMLValidator;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Scanner;
 
 public class Server {
     /**
@@ -18,7 +31,8 @@ public class Server {
      */
 
     public final static int DEFAULT_PORT = 5025;
-    private static GameRoom lobby = new GameRoom(5);
+
+    private static final List<ClientHandler> lobby = Collections.synchronizedList(new ArrayList<>());
 
     public static void main(String[] args) {
 
@@ -49,7 +63,25 @@ public class Server {
      * servidor dedicado: contém toda a lógica de atendimento do cliente.
      */
     private static void handleClient(Socket connection) {
+        ClientHandler handler = new ClientHandler(connection);
+        handler.start();
+    }
 
+    public static void joinLobby(ClientHandler player) {
+        synchronized (lobby) {
+            if (lobby.contains(player)) {
+                player.sendXML("<protocol><response status='fail' msg='Ja estas na fila!'/></protocol>");
+                return;
+            }
+
+            lobby.add(player);
+
+            if (lobby.size() >= 2) {
+                ClientHandler p1 = lobby.remove(0);
+                ClientHandler p2 = lobby.remove(0);
+                new GameRoom(p1, p2, 5); // Inicia a sessão
+            }
+        }
     }
 
 }

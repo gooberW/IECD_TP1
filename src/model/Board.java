@@ -3,7 +3,7 @@ package model;
 import java.util.*;
 
 public class Board {
-    private final int gridSize; // ex: 3 (pontos)
+    private final int gridSize;
     private final Map<String, Line> lines = new HashMap<>();
     private final List<Box> boxes = new ArrayList<>();
 
@@ -43,17 +43,15 @@ public class Board {
                 closedAnyBox = true;
             }
         }
-        return closedAnyBox; // Se true, o jogador joga outra vez 
+        return closedAnyBox; // Se true, o jogador joga outra vez
     }
 
-    // Métodos Auxiliares
     private void createLine(int x1, int y1, int x2, int y2) {
         Line l = new Line(new Dot(x1, y1), new Dot(x2, y2));
         lines.put(getLineKey(x1, y1, x2, y2), l);
     }
 
     private Line getLine(int x1, int y1, int x2, int y2) {
-        // Tenta encontrar a linha independentemente da ordem dos pontos
         Line l = lines.get(getLineKey(x1, y1, x2, y2));
         if (l == null) l = lines.get(getLineKey(x2, y2, x1, y1));
         return l;
@@ -65,5 +63,22 @@ public class Board {
 
     public boolean isGameOver() {
         return lines.values().stream().allMatch(Line::isOccupied);
+    }
+
+    /**
+     * Retorna a pontuação de um jogador específico
+     */
+    public int getScore(String playerNickname) {
+        int score = 0;
+        for (Box box : boxes) {
+            if (playerNickname.equals(box.getOwnerNickname())) {
+                score++;
+            }
+        }
+        return score;
+    }
+
+    public List<Box> getBoxes() {
+        return Collections.unmodifiableList(boxes);
     }
 }

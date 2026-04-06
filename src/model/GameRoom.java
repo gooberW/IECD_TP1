@@ -1,132 +1,110 @@
 package model;
 
-import java.util.ArrayList;
+import server.ClientHandler;
+import utils.PlayerDB;
+import java.util.Random;
 import java.util.List;
 
-/**
- * Representa uma sala de jogos (lobby).
- * 
- * Gere a fila de espera de jogadores e cria novas partidas quando há jogadores suficientes nessa fila de espera.
- * 
- */
 public class GameRoom {
-    
-    /** Lista de jogadores à espera de um oponente */
-    private List<String> filaEspera;
-    
-    /** Lista de jogos ativos */
-    private List<Game> jogosAtivos;
-    
-    /** Histórico de jogos terminados */
-    private List<Game> historicoJogos;
-    
-    /** Tamanho padrão do tabuleiro */
-    private int tamanhoTabuleiro;
-    
-    /**
-     * Construtor da sala de jogos.
-     * 
-     * @param tamanhoTabuleiro Tamanho da grelha para os novos jogos (ex: 3, 5)
-     */
-    public GameRoom(int tamanhoTabuleiro) {
-        this.filaEspera = new ArrayList<>();
-        this.jogosAtivos = new ArrayList<>();
-        this.historicoJogos = new ArrayList<>();
-        this.tamanhoTabuleiro = tamanhoTabuleiro;
+    private final ClientHandler player1;
+    private final ClientHandler player2;
+    private final Board board;
+    private ClientHandler currentTurn;
+    private String lastMoveCoords = "";
+
+    public GameRoom(ClientHandler p1, ClientHandler p2, int gridSize) {
+        this.player1 = p1;
+        this.player2 = p2;
+        this.board = new Board(gridSize);
+
+        p1.setGameSession(this);
+        p2.setGameSession(this);
+
+        this.currentTurn = new Random().nextBoolean() ? p1 : p2;
+        System.out.println("[GAME] Partida iniciada: " + p1.getNickname() + " vs " + p2.getNickname());
+
+        broadcastGameStart();
     }
-    
-    /**
-     * Adiciona um jogador à fila de espera.
-     * Se houver pelo menos 2 jogadores na fila, cria automaticamente um novo jogo.
-     * 
-     * @param nomeJogador Nome do jogador a entrar na fila
-     * @return O jogo criado (se houver pares), ou null se ainda à espera
-     */
-    public Game adicionarJogador(String nomeJogador) {
-        System.out.println(nomeJogador + " entrou na fila de espera.");
-        filaEspera.add(nomeJogador);
-        
-        // Verifica se há pelo menos 2 jogadores para formar um jogo
-        if (filaEspera.size() >= 2) {
-            String jogador1 = filaEspera.remove(0);
-            String jogador2 = filaEspera.remove(0);
-            return criarJogo(jogador1, jogador2);
+
+    private void broadcastGameStart() {
+        player1.sendXML("<protocol><match start='true' opponent='" + player2.getNickname() + "' playerRole='1'/></protocol>");
+        player2.sendXML("<protocol><match start='true' opponent='" + player1.getNickname() + "' playerRole='2'/></protocol>");
+        broadcastGameState();
+    }
+
+    public synchronized void handleMove(ClientHandler sender, int x1, int y1, int x2, int y2) {
+        if (sender != currentTurn) {
+            sender.sendXML("<protocol><response status='fail' msg='Nao e o teu turno!'/></protocol>");
+            return;
         }
-        
-        return null;  // Aguarda mais jogadores
-    }
-    
-    /**
-     * Cria um novo jogo entre dois jogadores.
-     * 
-     * @param nomeJogador1 Primeiro jogador
-     * @param nomeJogador2 Segundo jogador
-     * @return O novo jogo criado
-     */
-    private Game criarJogo(String nomeJogador1, String nomeJogador2) {
-        System.out.println(" Novo jogo criado entre " + nomeJogador1 + " e " + nomeJogador2 + "!");
-        
-        Game novoJogo = new Game(nomeJogador1, nomeJogador2, tamanhoTabuleiro);
-        jogosAtivos.add(novoJogo);
-        return novoJogo;
-    }
-    
-    /**
-     * Remove um jogo da lista de ativos (quando termina) e adiciona ao histórico.
-     * 
-     * @param jogo O jogo a terminar
-     */
-    public void terminarJogo(Game jogo) {
-        if (jogosAtivos.remove(jogo)) {
-            historicoJogos.add(jogo);
-            System.out.println(" Jogo terminado e movido para o histórico.");
+
+        boolean closedBox = board.makeMove(x1, y1, x2, y2, sender.getNickname());
+        this.lastMoveCoords = String.format("%d,%d-%d,%d", x1, y1, x2, y2);
+
+        if (!closedBox) {
+            currentTurn = (currentTurn == player1) ? player2 : player1;
+        }
+
+        broadcastGameState();
+
+        if (board.isGameOver()) {
+            broadcastGameOver();
         }
     }
-    
-    /**
-     * Obtém a lista de jogos ativos.
-     * 
-     * @return Lista de jogos em curso
-     */
-    public List<Game> getJogosAtivos() {
-        return new ArrayList<>(jogosAtivos);
+
+    private void broadcastGameState() {
+        String updateXML = generateUpdateXML();
+        player1.sendXML(updateXML);
+        player2.sendXML(updateXML);
     }
-    
-    /**
-     * Obtém o número de jogadores na fila de espera.
-     * 
-     * @return Tamanho da fila
-     */
-    public int getTamanhoFila() {
-        return filaEspera.size();
+
+    private String generateUpdateXML() {
+        int p1Score = board.getScore(player1.getNickname());
+        int p2Score = board.getScore(player2.getNickname());
+
+        String scores = String.format("%s: %d, %s: %d",
+                player1.getNickname(), p1Score,
+                player2.getNickname(), p2Score);
+
+        return "<protocol><update next='" + currentTurn.getNickname() + "' " +
+                "scores='" + scores + "' lastMove='" + lastMoveCoords + "'/></protocol>";
     }
-    
-    /**
-     * Obtém a lista de jogadores em espera.
-     * 
-     * @return Lista de nomes dos jogadores à espera
-     */
-    public List<String> getFilaEspera() {
-        return new ArrayList<>(filaEspera);
+
+    private void broadcastGameOver() {
+        int p1Score = board.getScore(player1.getNickname());
+        int p2Score = board.getScore(player2.getNickname());
+
+        String result;
+        String winner = null;
+        String loser = null;
+
+        if (p1Score > p2Score) {
+            result = "Vencedor: " + player1.getNickname();
+            winner = player1.getNickname(); loser = player2.getNickname();
+        } else if (p2Score > p1Score) {
+            result = "Vencedor: " + player2.getNickname();
+            winner = player2.getNickname(); loser = player1.getNickname();
+        } else {
+            result = "Empate!";
+        }
+
+        updatePlayerStats(winner, loser);
+
+        String finalXML = "<protocol><gameOver msg='" + result + "'/></protocol>";
+        player1.sendXML(finalXML);
+        player2.sendXML(finalXML);
     }
-    
-    /**
-     * Obtém estatísticas da sala de espera.
-     * 
-     * @return String com resumo da atividade da sala de espera
-     */
-    public String getEstatisticas() {
-        return String.format(
-            " Estatísticas da Sala:\n" +
-            "   - Jogos ativos: %d\n" +
-            "   - Jogos terminados: %d\n" +
-            "   - Jogadores em espera: %d\n" +
-            "   - Tamanho do tabuleiro: %dx%d",
-            jogosAtivos.size(),
-            historicoJogos.size(),
-            filaEspera.size(),
-            tamanhoTabuleiro,
-            tamanhoTabuleiro
-        );
+
+    private void updatePlayerStats(String winner, String loser) {
+        if (winner == null && loser == null) return;
+
+        synchronized (PlayerDB.class) {
+            List<Player> players = PlayerDB.load();
+            for (Player p : players) {
+                if (p.getNickname().equals(winner)) p.setTotalWins(p.getTotalWins() + 1);
+                if (p.getNickname().equals(loser)) p.setTotalLosses(p.getTotalLosses() + 1);
+            }
+            PlayerDB.save(players);
+        }
     }
 }

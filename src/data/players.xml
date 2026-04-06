@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<players>
+    <player>
+        <nickname>goober</nickname>
+        <password>goober</password>
+        <age>20</age>
+        <nationality>PT</nationality>
+        <photo>2</photo>
+        <wins>0</wins>
+        <losses>0</losses>
+        <avgTime>0</avgTime>
+    </player>
+    <player>
+        <nickname>ola</nickname>
+        <password>ola</password>
+        <age>21</age>
+        <nationality>FR</nationality>
+        <photo>photo</photo>
+        <wins>0</wins>
+        <losses>0</losses>
+        <avgTime>0</avgTime>
+    </player>
+</players>
