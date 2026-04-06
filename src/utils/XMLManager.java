@@ -1,4 +1,4 @@
-package xml;
+package utils;
 
 public class XMLManager {
 }

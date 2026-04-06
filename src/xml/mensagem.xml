@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mensagem>
-    <player>
-        <name>Player</name>
-        <moveA>0</moveA> //coordenada do ponto A
-        <moveB>0</moveB> // coordenada do ponto B
-    </player>
-</mensagem>

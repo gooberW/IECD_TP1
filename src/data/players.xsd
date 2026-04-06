@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="players">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="player" maxOccurs="unbounded" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="nickname" type="xs:string"/>
+                            <xs:element name="password" type="xs:string"/>
+                            <xs:element name="age" type="xs:integer"/>
+                            <xs:element name="nationality" type="xs:string"/>
+                            <xs:element name="photo" type="xs:string"/>
+                            <xs:element name="wins" type="xs:integer"/>
+                            <xs:element name="losses" type="xs:integer"/>
+                            <xs:element name="avgTime" type="xs:long"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

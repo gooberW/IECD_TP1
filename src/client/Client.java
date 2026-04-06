@@ -1,8 +1,7 @@
-package model;
+package client;
 
 import java.io.IOException;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 
 public class Client {
     /**
