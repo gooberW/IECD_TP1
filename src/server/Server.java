@@ -1,5 +1,7 @@
 package server;
 
+import model.GameRoom;
+
 import java.io.IOException;
 import java.net.*;
 
@@ -16,6 +18,7 @@ public class Server {
      */
 
     public final static int DEFAULT_PORT = 5025;
+    private static GameRoom lobby = new GameRoom(5);
 
     public static void main(String[] args) {
 
@@ -24,7 +27,7 @@ public class Server {
             System.out.println("[Servidor] Servidor iniciado no porto: " + DEFAULT_PORT);
 
             while (true) {
-                System.out.println("[Servidor] Waiting...");
+                System.out.println("[Servidor] À espera...");
 
                 // aceita a ligação do cliente (Bloqueado até que alguém ligue)
                 Socket clientSocket = serverSocket.accept();

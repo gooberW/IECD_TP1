@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:element name="protocol">
+        <xs:complexType>
+            <xs:choice>
+                <xs:element name="register">
+                    <xs:complexType>
+                        <xs:attribute name="nickname" type="xs:string" use="required"/>
+                        <xs:attribute name="password" type="xs:string" use="required"/>
+                        <xs:attribute name="age" type="xs:integer" use="required"/>
+                        <xs:attribute name="nationality" type="xs:string" use="required"/>
+                        <xs:attribute name="photo" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element name="login">
+                    <xs:complexType>
+                        <xs:attribute name="nickname" type="xs:string" use="required"/>
+                        <xs:attribute name="password" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element name="response">
+                    <xs:complexType>
+                        <xs:attribute name="status" use="required">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="success"/>
+                                    <xs:enumeration value="fail"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:attribute>
+                        <xs:attribute name="nickname" type="xs:string"/>
+                        <xs:attribute name="wins" type="xs:integer"/>
+                        <xs:attribute name="msg" type="xs:string"/>
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element name="status" type="xs:string"/>
+
+                <xs:element name="match">
+                    <xs:complexType>
+                        <xs:attribute name="start" type="xs:boolean" use="required"/>
+                        <xs:attribute name="opponent" type="xs:string" use="required"/>
+                        <xs:attribute name="playerRole" type="xs:integer" use="required"/> </xs:complexType>
+                </xs:element>
+
+                <xs:element name="update">
+                    <xs:complexType>
+                        <xs:attribute name="next" type="xs:string" use="required"/>
+                        <xs:attribute name="scores" type="xs:string" use="required"/>
+                        <xs:attribute name="lastMove" type="xs:string"/>
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element name="your_turn" type="xs:string" fixed=""/>
+
+                <xs:element name="move">
+                    <xs:complexType>
+                        <xs:attribute name="x" type="xs:integer" use="required"/>
+                        <xs:attribute name="y" type="xs:integer" use="required"/>
+                        <xs:attribute name="type" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element name="gameOver">
+                    <xs:complexType>
+                        <xs:attribute name="msg" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+
+            </xs:choice>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
