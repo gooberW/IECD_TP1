@@ -30,21 +30,23 @@ public class GameRoom {
     }
 
     private void broadcastGameStart() {
-        // Criar XML para o Jogador 1
+        // XML para o jogador 1
         Document doc1 = createBaseDocument();
         Element match1 = doc1.createElement("match");
         match1.setAttribute("start", "true");
         match1.setAttribute("opponent", player2.getNickname());
         match1.setAttribute("playerRole", "1");
+        match1.setAttribute("size", String.valueOf(board.getGridSize()));
         doc1.getDocumentElement().appendChild(match1);
         player1.sendValidatedXML(doc1);
 
-        // Criar XML para o Jogador 2
+        // XML para o jogador 2
         Document doc2 = createBaseDocument();
         Element match2 = doc2.createElement("match");
         match2.setAttribute("start", "true");
         match2.setAttribute("opponent", player1.getNickname());
         match2.setAttribute("playerRole", "2");
+        match2.setAttribute("size", String.valueOf(board.getGridSize()));
         doc2.getDocumentElement().appendChild(match2);
         player2.sendValidatedXML(doc2);
 
@@ -55,6 +57,11 @@ public class GameRoom {
         if (sender != currentTurn) {
             sendError(sender, "Não é o teu turno!");
             return;
+        }
+
+        if (board.isLineOccupied(x1, y1, x2, y2)) {
+            sendError(sender, "Essa linha já foi traçada! Escolhe outra.");
+            return; // retorna sem mudar o currentTurn, assim o jogador tenta outra vez
         }
 
         try {
@@ -71,7 +78,7 @@ public class GameRoom {
                 broadcastGameOver();
             }
         } catch (Exception e) {
-            sendError(sender, "Jogada inválida: " + e.getMessage());
+            sendError(sender, "Erro na jogada: " + e.getMessage());
         }
     }
 
@@ -85,12 +92,10 @@ public class GameRoom {
         Document doc = createBaseDocument();
         Element update = doc.createElement("update");
 
-        // Atributos básicos
         update.setAttribute("next", currentTurn.getNickname());
         update.setAttribute("scores", calculateScoresString());
         update.setAttribute("lastMove", lastMoveCoords);
 
-        // Lógica das Boxes (i,j:L|...)
         StringBuilder sb = new StringBuilder();
         int boxLimit = board.getGridSize() - 1;
         for (int i = 0; i < boxLimit; i++) {

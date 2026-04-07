@@ -75,7 +75,7 @@ public class ClientHandler extends Thread {
             switch (command) {
                 case "login" -> handleLogin(commandElement);
                 case "register" -> handleRegister(commandElement);
-                case "play" -> handlePlay();
+                case "play" -> handlePlay(commandElement);
                 case "move" -> handleMove(commandElement);
                 default -> sendErrorResponse("[ERRO] Comando desconhecido");
             }
@@ -144,21 +144,34 @@ public class ClientHandler extends Thread {
         sendValidatedXML(doc);
     }
 
-    private void handlePlay() {
-        Document doc = createBaseDocument();
-        Element resp = doc.createElement("response");
-
+    private void handlePlay(Element el) {
         if (authenticated) {
-            resp.setAttribute("status", "success");
-            resp.setAttribute("msg", "[D&B] Entraste na fila de espera. A aguardar oponente...");
-            Server.joinLobby(this);
-        } else {
-            resp.setAttribute("status", "fail");
-            resp.setAttribute("msg", "[ERRO] Precisas de fazer login primeiro!");
-        }
+            int size = 3; // default
+            if (el.hasAttribute("size")) {
+                size = Integer.parseInt(el.getAttribute("size"));
+            }
 
-        doc.getDocumentElement().appendChild(resp);
-        sendValidatedXML(doc);
+            if(size < 2) {
+                sendErrorResponse("Tamanho inválido. O tamanho mínimo para um tabuleiro é 2x2.");
+                return;
+            }
+
+            if(size > 10) {
+                sendErrorResponse("Tamanho inválido. O tamanho máximo para um tabuleiro é 10x10.");
+                return;
+            }
+
+            Document doc = createBaseDocument();
+            Element resp = doc.createElement("response");
+            resp.setAttribute("status", "success");
+            resp.setAttribute("msg", "Na fila para tabuleiro " + size + "x" + size);
+            doc.getDocumentElement().appendChild(resp);
+            sendValidatedXML(doc);
+
+            Server.joinLobby(this, size);
+        } else {
+            sendErrorResponse("Faz login primeiro!");
+        }
     }
 
     private void handleMove(Element el) {
@@ -227,7 +240,7 @@ public class ClientHandler extends Thread {
     public void setGameSession(GameRoom room) { this.currentGame = room; }
 
     private void cleanup() {
-        System.out.println("[Handler] Conexão encerrada: " + (nickname != null ? nickname : "Anonimo"));
+        System.out.println("[HANDLER] Conexão encerrada: " + (nickname != null ? nickname : "Anonimo"));
         Server.removeFromLobby(this);
         try {
             socket.close();

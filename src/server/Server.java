@@ -6,14 +6,13 @@ import org.w3c.dom.Element;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 //servidor concorrente
 public class Server {
     public final static int DEFAULT_PORT = 5025;
     private static final List<ClientHandler> lobby = Collections.synchronizedList(new ArrayList<>());
+    private static final Map<Integer, List<ClientHandler>> lobbies = Collections.synchronizedMap(new HashMap<>());
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(DEFAULT_PORT)) {
@@ -32,21 +31,22 @@ public class Server {
         }
     }
 
-    public static void joinLobby(ClientHandler player) {
-        synchronized (lobby) {
-            if (lobby.contains(player)) {
-                player.sendErrorResponse("Já estás na fila de espera!");
+    public static void joinLobby(ClientHandler player, int size) {
+        synchronized (lobbies) {
+            List<ClientHandler> queue = lobbies.computeIfAbsent(size, k -> new ArrayList<>());
+
+            if (queue.contains(player)) {
+                player.sendErrorResponse("Já estás na fila para " + size + "x" + size);
                 return;
             }
 
-            lobby.add(player);
-            System.out.println("[LOBBY] " + player.getNickname() + " entrou na fila.");
+            queue.add(player);
+            System.out.println("[LOBBY] Nick: " + player.getNickname() + " | Tamanho: " + size + " | Em espera: " + queue.size());
 
-            if (lobby.size() >= 2) {
-                ClientHandler p1 = lobby.remove(0);
-                ClientHandler p2 = lobby.remove(0);
-
-                new GameRoom(p1, p2, 5);
+            if (queue.size() >= 2) {
+                ClientHandler p1 = queue.remove(0);
+                ClientHandler p2 = queue.remove(0);
+                new GameRoom(p1, p2, size);
             }
         }
     }

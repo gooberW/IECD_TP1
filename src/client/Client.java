@@ -35,12 +35,11 @@ public class Client {
 
             Thread listener = new Thread(() -> {
                 while (in.hasNextLine()) {
-                    String xmlLine = in.nextLine();
-                    if (XMLValidator.validate(xmlLine, XSD_PATH)) {
-                        processServerMessage(xmlLine);
-                    }
+                    String response = in.nextLine();
+                    processServerMessage(response);
+
                 }
-                System.out.println("\n[CLIENT] Ligação perdida.");
+                System.out.println("\n[CLIENT] Ligação perdida com o servidor.");
                 running = false;
             });
             listener.setDaemon(true);
@@ -91,6 +90,9 @@ public class Client {
                     action.setAttribute("photo", parts[5]);
                     break;
                 case "play":
+                    // Se o utilizador só escrever "play", assume 3 por defeito
+                    String size = (parts.length > 1) ? parts[1] : "3";
+                    action.setAttribute("size", size);
                     break;
                 case "move":
                     action.setAttribute("x1", parts[1]);
@@ -128,7 +130,7 @@ public class Client {
             if (tagName.equals("response")) {
                 String status = el.getAttribute("status");
                 String msg = el.getAttribute("msg");
-                System.out.println((status.equals("success") ? "[:)] " : "[:(] ") + msg);
+                System.out.println(msg);
 
                 if (status.equals("success") && el.hasAttribute("nickname")) {
                     myNickname = el.getAttribute("nickname");
@@ -138,6 +140,7 @@ public class Client {
                 System.out.println("\n[D&B] Partida contra: " + el.getAttribute("opponent"));
                 occupiedLines.clear();
                 conqueredBoxes.clear();
+                currentGridSize = Integer.parseInt(el.getAttribute("size"));
             }
             else if (tagName.equals("update")) {
                 String last = el.getAttribute("lastMove");
@@ -151,6 +154,7 @@ public class Client {
                 System.out.println("Próximo: " + el.getAttribute("next"));
                 if (el.getAttribute("next").equalsIgnoreCase(myNickname)) {
                     System.out.println(">>> É A TUA VEZ! <<<");
+                    System.out.println("> move <x1> <y1> <x2> <y2>");
                 }
             }
             else if (tagName.equals("gameOver")) {
@@ -160,6 +164,7 @@ public class Client {
         } catch (Exception e) {
             System.err.println("Erro ao processar mensagem do servidor.");
         }
+        System.out.flush();
     }
 
     private static Node getFirstElementChild(Node parent) {
@@ -180,7 +185,7 @@ public class Client {
 
     private static void showMenu() {
         System.out.println("\nComandos: \nlogin <nickname> <password>" +
-                "\nregister <nickname> <password> <age> <nat> <photo> \nplay \nsair");
+                "\nregister <nickname> <password> <age> <nat> <photo> \nplay <tamanho> (ex: play 3 para 3x3 pontos, play 5 para 5x5)\"); \nsair");
     }
 
     private static void drawBoard() {

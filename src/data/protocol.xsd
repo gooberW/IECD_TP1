@@ -39,13 +39,19 @@
 
                 <xs:element name="status" type="xs:string"/>
 
-                <xs:element name="play" type="xs:string" fixed=""/>
+                <xs:element name="play">
+                    <xs:complexType>
+                        <xs:attribute name="size" type="xs:integer" use="optional"/>
+                    </xs:complexType>
+                </xs:element>
 
                 <xs:element name="match">
                     <xs:complexType>
                         <xs:attribute name="start" type="xs:boolean" use="required"/>
                         <xs:attribute name="opponent" type="xs:string" use="required"/>
-                        <xs:attribute name="playerRole" type="xs:integer" use="required"/> </xs:complexType>
+                        <xs:attribute name="playerRole" type="xs:integer" use="required"/>
+                        <xs:attribute name="size" type="xs:integer" use="required"/>
+                    </xs:complexType>
                 </xs:element>
 
                 <xs:element name="update">
@@ -53,6 +59,7 @@
                         <xs:attribute name="next" type="xs:string" use="required"/>
                         <xs:attribute name="scores" type="xs:string" use="required"/>
                         <xs:attribute name="lastMove" type="xs:string"/>
+                        <xs:attribute name="boxes" type="xs:string"/>
                     </xs:complexType>
                 </xs:element>
 
