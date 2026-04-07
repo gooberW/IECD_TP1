@@ -66,8 +66,27 @@ public class GameRoom {
                 player1.getNickname(), p1Score,
                 player2.getNickname(), p2Score);
 
-        return "<protocol><update next='" + currentTurn.getNickname() + "' " +
-                "scores='" + scores + "' lastMove='" + lastMoveCoords + "'/></protocol>";
+        // vai ser tipo x,y:Letra
+        StringBuilder boxesInfo = new StringBuilder();
+        int boxLimit = board.getGridSize() - 1;
+
+        for (int i = 0; i < boxLimit; i++) {
+            for (int j = 0; j < boxLimit; j++) {
+                String owner = board.getBoxOwner(i, j);
+                if (owner != null && !owner.isEmpty()) {
+                    if (boxesInfo.length() > 0) boxesInfo.append("|");
+                    // envia apenas a inicial
+                    boxesInfo.append(i).append(",").append(j).append(":").append(owner.charAt(0));
+                }
+            }
+        }
+
+        return "<protocol>" +
+                "<update next='" + currentTurn.getNickname() + "' " +
+                "scores='" + scores + "' " +
+                "lastMove='" + lastMoveCoords + "' " +
+                "boxes='" + boxesInfo.toString() + "'/>" +
+                "</protocol>";
     }
 
     private void broadcastGameOver() {

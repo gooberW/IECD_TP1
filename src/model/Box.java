@@ -3,13 +3,17 @@ package model;
 public class Box {
     private final Line[] sides; // as 4 linhas que formam o quadrado
     private String ownerNickname; // armazena quem fechou a caixa (null se aberta)
+    private int row, col;
 
-    public Box(Line[] sides) {
+    public Box(Line[] sides, int row, int col) {
         if (sides.length != 4) {
             throw new IllegalArgumentException("[BOX] Uma caixa deve ter exatamente 4 linhas.");
         }
         this.sides = sides;
         this.ownerNickname = null;
+
+        this.col = col;
+        this.row = row;
     }
 
     /**
@@ -37,5 +41,13 @@ public class Box {
 
     public boolean isClosed() {
         return ownerNickname != null;
+    }
+
+    public int getRow() {
+        return this.row;
+    }
+
+    public int getCol(){
+        return this.col;
     }
 }

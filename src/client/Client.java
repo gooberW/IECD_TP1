@@ -89,47 +89,98 @@ public class Client {
      * Processa o XML vindo do servidor e mostra na consola.
      */
     private static void processServerMessage(String xml) {
-        // TODO: apresentar o tabuleiro
 
-        if (xml.contains("<response status='success'")) {
-            System.out.println("\n[OK] Operação realizada com sucesso.");
-        } else if (xml.contains("<response status='fail'")) {
-            System.out.println("\n[ERRO] " + extractAttribute(xml, "msg"));
-        } else if (xml.contains("<match")) {
-            System.out.println("\n[JOGO] Partida encontrada contra: " + extractAttribute(xml, "opponent"));
-        } else if (xml.contains("<gameOver")) {
-            System.out.println("\n=== FIM DE JOGO ===");
-            System.out.println(extractAttribute(xml, "msg"));
-        } else if (xml.contains("<update")) {
-            String lastMove = extractAttribute(xml, "lastMove");
-            if (!lastMove.isEmpty() && !lastMove.equals("N/A")) {
-                // Normaliza a chave (menor ponto primeiro) para garantir o match
-                occupiedLines.add(normalizeKey(lastMove));
+        if (xml.contains("<response")) {
+            String status = extractAttribute(xml, "status");
+            String msg = extractAttribute(xml, "msg");
+            if (!msg.equals("N/A")) {
+                String icon = status.equals("success") ? "[:)] " : "[:(] ERRO: ";
+                System.out.println("\n" + icon + msg);
+            }
+            // guarda o nickname se o login correr bem
+            if (status.equals("success") && xml.contains("nickname='")) {
+                myNickname = extractAttribute(xml, "nickname");
+            }
+        }
+
+        if (xml.contains("<match")) {
+            String opp = extractAttribute(xml, "opponent");
+            System.out.println("\n[D&B] Partida encontrada contra: " + opp);
+            occupiedLines.clear();
+            conqueredBoxes.clear();
+        }
+
+        // atualizacoes do yabuleiro
+        if (xml.contains("<update")) {
+            // linahs
+            String last = extractAttribute(xml, "lastMove");
+            if (!last.equals("N/A") && !last.isEmpty()) {
+                occupiedLines.add(normalizeKey(last));
+            }
+
+            // caixas
+            String boxesAttr = extractAttribute(xml, "boxes");
+            if (!boxesAttr.equals("N/A") && !boxesAttr.isEmpty()) {
+                parseBoxes(boxesAttr);
             }
 
             drawBoard();
 
+            //turno e pontos
             String next = extractAttribute(xml, "next");
-            System.out.println("Pontuação: " + extractAttribute(xml, "scores"));
-            System.out.println("Próximo: " + next);
-            if (next.equals(myNickname)) System.out.println(">>> É A TUA VEZ! <<<");
+            String scores = extractAttribute(xml, "scores");
+
+            System.out.println("Pontuação: " + scores);
+            if (!next.equals("N/A")) {
+                System.out.println("Próximo a jogar: " + next);
+                if (next.equalsIgnoreCase(myNickname)) {
+                    System.out.println("\n>>> É A TUA VEZ! (move x1 y1 x2 y2) <<<");
+                }
+            }
+        }
+
+        // ganme over
+        if (xml.contains("<gameOver")) {
+            System.out.println("\n=== FIM DO JOGO ===");
+            System.out.println(extractAttribute(xml, "msg"));
+        }
+    }
+
+    private static void parseBoxes(String data) {
+        // vem no formato x,y:Letra|x,y:Letra|...
+        String[] pairs = data.split("\\|");
+        for (String pair : pairs) {
+            String[] parts = pair.split(":");
+            if (parts.length == 2) {
+                conqueredBoxes.put(parts[0], parts[1]);
+            }
         }
     }
 
     private static String extractAttribute(String xml, String attr) {
         try {
+            // procura por nome_do_atributo='
             String search = attr + "='";
-            int start = xml.indexOf(search) + search.length();
-            int end = xml.indexOf("'", start);
-            return xml.substring(start, end);
-        } catch (Exception e) { return "N/A"; }
+            int startPos = xml.indexOf(search);
+
+            if (startPos == -1) return "N/A"; // nao foi encontrado
+
+            startPos += search.length();
+            int endPos = xml.indexOf("'", startPos);
+
+            if (endPos == -1) return "N/A";
+
+            return xml.substring(startPos, endPos);
+        } catch (Exception e) {
+            return "Erro ao extrair o atributo: " + attr;
+        }
     }
 
     private static void showMenu() {
         System.out.println("Comandos disponíveis:");
         System.out.println("  login <nick> <pass>");
         System.out.println("  register <nick> <pass> <age> <nat> <photo>");
-        System.out.println("  move <x1> <y1> <x2> <y2>");
+        System.out.println("  play");
         System.out.println("  sair");
     }
 

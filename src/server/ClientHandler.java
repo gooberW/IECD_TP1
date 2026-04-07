@@ -87,7 +87,7 @@ public class ClientHandler extends Thread {
                     break;
                 case "play":
                     if (authenticated) {
-                        sendXML("<protocol><status>Entraste na fila de espera. A aguardar oponente...</status></protocol>");
+                        sendXML("<protocol><response status='success' msg='Entraste na fila de espera. A aguardar oponente...'/></protocol>");
                         Server.joinLobby(this);
                     } else {
                         sendXML("<protocol><response status='fail' msg='Precisas de fazer login primeiro!'/></protocol>");

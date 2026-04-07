@@ -26,7 +26,7 @@ public class Board {
                 Line bottom = getLine(i + 1, j, i + 1, j + 1);
                 Line left = getLine(i, j, i + 1, j);
                 Line right = getLine(i, j + 1, i + 1, j + 1);
-                boxes.add(new Box(new Line[]{top, bottom, left, right}));
+                boxes.add(new Box(new Line[]{top, bottom, left, right}, i, j));
             }
         }
     }
@@ -76,6 +76,20 @@ public class Board {
             }
         }
         return score;
+    }
+
+    public int getGridSize(){
+        return this.gridSize;
+    }
+
+    public String getBoxOwner(int row, int col) {
+        for (Box b : boxes) {
+            // Precisas de guardar as coordenadas i,j dentro da classe Box quando a crias
+            if (b.getRow() == row && b.getCol() == col) {
+                return b.getOwnerNickname();
+            }
+        }
+        return null;
     }
 
     public List<Box> getBoxes() {
