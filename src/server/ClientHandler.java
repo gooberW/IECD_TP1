@@ -8,6 +8,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import utils.PlayerDB;
+import utils.XMLMessageBuilder;
 import utils.XMLValidator;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -24,6 +25,8 @@ public class ClientHandler extends Thread {
     private GameRoom currentGame;
     private boolean authenticated = false;
 
+    private static final String XSD_PATH = "src/data/protocol.xsd";
+
     public ClientHandler(Socket socket) {
         this.socket = socket;
     }
@@ -35,21 +38,20 @@ public class ClientHandler extends Thread {
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true)
         ) {
             this.out = out;
-            System.out.println("[Handler] Cliente conectado: " + socket.getRemoteSocketAddress());
+            System.out.println("[HANDLER] Cliente conectado: " + socket.getRemoteSocketAddress());
 
             while (in.hasNextLine()) {
                 String xmlReceived = in.nextLine();
 
-                // valida o xml
-                if (!XMLValidator.validate(xmlReceived, "src/data/protocol.xsd")) {
-                    sendXML("<protocol><response status='fail' msg='XML invalido face ao XSD'/></protocol>");
+                if (!XMLValidator.validate(xmlReceived, XSD_PATH)) {
+                    sendErrorResponse("[HANDLER] XML invalido face ao XSD");
                     continue;
                 }
 
                 processRequest(xmlReceived);
             }
         } catch (IOException e) {
-            System.err.println("[Handler] Erro na ligacao com " + (nickname != null ? nickname : "anonimo") + ": " + e.getMessage());
+            System.err.println("[HANDLER] Erro na ligacao com " + (nickname != null ? nickname : "anonimo") + ": " + e.getMessage());
         } finally {
             cleanup();
         }
@@ -62,119 +64,173 @@ public class ClientHandler extends Thread {
             Document doc = builder.parse(new InputSource(new StringReader(xml)));
             doc.getDocumentElement().normalize();
 
-            // O elemento dentro de <protocol>
-            Node protocolNode = doc.getDocumentElement();
-            Node commandNode = null;
-            NodeList children = protocolNode.getChildNodes();
-
-            for (int i = 0; i < children.getLength(); i++) {
-                if (children.item(i).getNodeType() == Node.ELEMENT_NODE) {
-                    commandNode = children.item(i);
-                    break;
-                }
-            }
+            Element protocolRoot = doc.getDocumentElement();
+            Node commandNode = getFirstElementChild(protocolRoot);
 
             if (commandNode == null) return;
+
             String command = commandNode.getNodeName();
-            Element el = (Element) commandNode;
+            Element commandElement = (Element) commandNode;
 
             switch (command) {
-                case "login":
-                    handleLogin(el);
-                    break;
-                case "register":
-                    handleRegister(el);
-                    break;
-                case "play":
-                    if (authenticated) {
-                        sendXML("<protocol><response status='success' msg='Entraste na fila de espera. A aguardar oponente...'/></protocol>");
-                        Server.joinLobby(this);
-                    } else {
-                        sendXML("<protocol><response status='fail' msg='Precisas de fazer login primeiro!'/></protocol>");
-                    }
-                    break;
-                case "move":
-                    handleMove(el);
-                    break;
-                default:
-                    sendXML("<protocol><response status='fail' msg='Comando desconhecido'/></protocol>");
+                case "login" -> handleLogin(commandElement);
+                case "register" -> handleRegister(commandElement);
+                case "play" -> handlePlay();
+                case "move" -> handleMove(commandElement);
+                default -> sendErrorResponse("[ERRO] Comando desconhecido");
             }
         } catch (Exception e) {
-            sendXML("<protocol><response status='fail' msg='Erro no processamento interno'/></protocol>");
+            sendErrorResponse("[ERRO] Erro no processamento interno: " + e.getMessage());
         }
     }
 
     private void handleLogin(Element el) {
         String nick = el.getAttribute("nickname");
         String pass = el.getAttribute("password");
-
         List<Player> players = PlayerDB.load();
-        for (Player p : players) {
-            if (p.getNickname().equals(nick) && p.getPassword().equals(pass)) {
-                this.nickname = nick;
-                this.authenticated = true;
-                sendXML("<protocol><response status='success' nickname='"+nick+"' wins='"+p.getTotalWins()+"'/></protocol>");
-                return;
-            }
+
+        Document doc = createBaseDocument();
+        Element resp = doc.createElement("response");
+
+        Player foundPlayer = players.stream()
+                .filter(p -> p.getNickname().equals(nick) && p.getPassword().equals(pass))
+                .findFirst()
+                .orElse(null);
+
+        if (foundPlayer != null) {
+            this.nickname = nick;
+            this.authenticated = true;
+            resp.setAttribute("status", "success");
+            resp.setAttribute("nickname", nick);
+            resp.setAttribute("wins", String.valueOf(foundPlayer.getTotalWins()));
+            resp.setAttribute("msg", "[D&B] Login efetuado com sucesso");
+        } else {
+            resp.setAttribute("status", "fail");
+            resp.setAttribute("msg", "[ERRO] Credenciais incorretas");
         }
-        sendXML("<protocol><response status='fail' msg='Credenciais incorretas'/></protocol>");
+
+        doc.getDocumentElement().appendChild(resp);
+        sendValidatedXML(doc);
     }
 
     private void handleRegister(Element el) {
         String nick = el.getAttribute("nickname");
         List<Player> players = PlayerDB.load();
 
-        // se nick já existe
-        for (Player p : players) {
-            if (p.getNickname().equalsIgnoreCase(nick)) {
-                sendXML("<protocol><response status='fail' msg='Nickname ja existe'/></protocol>");
-                return;
-            }
+        Document doc = createBaseDocument();
+        Element resp = doc.createElement("response");
+
+        boolean exists = players.stream().anyMatch(p -> p.getNickname().equalsIgnoreCase(nick));
+
+        if (exists) {
+            resp.setAttribute("status", "fail");
+            resp.setAttribute("msg", "[ERRO] Nickname ja existe");
+        } else {
+            Player newPlayer = new Player();
+            newPlayer.setNickname(nick);
+            newPlayer.setPassword(el.getAttribute("password"));
+            newPlayer.setAge(Integer.parseInt(el.getAttribute("age")));
+            newPlayer.setNationality(el.getAttribute("nationality"));
+            newPlayer.setProfilePicture(el.getAttribute("photo"));
+
+            players.add(newPlayer);
+            PlayerDB.save(players);
+
+            resp.setAttribute("status", "success");
+            resp.setAttribute("msg", "[D&B] Registado com sucesso");
         }
 
-        // cria novo jogador (os outros campos vêm do atributo do XSD)
-        Player newPlayer = new Player();
-        newPlayer.setNickname(nick);
-        newPlayer.setPassword(el.getAttribute("password"));
-        newPlayer.setAge(Integer.parseInt(el.getAttribute("age")));
-        newPlayer.setNationality(el.getAttribute("nationality"));
-        newPlayer.setProfilePicture(el.getAttribute("photo"));
+        doc.getDocumentElement().appendChild(resp);
+        sendValidatedXML(doc);
+    }
 
-        players.add(newPlayer);
-        PlayerDB.save(players);
-        sendXML("<protocol><response status='success' msg='Registado com sucesso'/></protocol>");
+    private void handlePlay() {
+        Document doc = createBaseDocument();
+        Element resp = doc.createElement("response");
+
+        if (authenticated) {
+            resp.setAttribute("status", "success");
+            resp.setAttribute("msg", "[D&B] Entraste na fila de espera. A aguardar oponente...");
+            Server.joinLobby(this);
+        } else {
+            resp.setAttribute("status", "fail");
+            resp.setAttribute("msg", "[ERRO] Precisas de fazer login primeiro!");
+        }
+
+        doc.getDocumentElement().appendChild(resp);
+        sendValidatedXML(doc);
     }
 
     private void handleMove(Element el) {
         if (!authenticated || currentGame == null) {
-            sendXML("<protocol><response status='fail' msg='Nao esta em jogo'/></protocol>");
+            sendErrorResponse("[ERRO] Nao esta em jogo ativo");
             return;
         }
 
-        int x1 = Integer.parseInt(el.getAttribute("x1"));
-        int y1 = Integer.parseInt(el.getAttribute("y1"));
-        int x2 = Integer.parseInt(el.getAttribute("x2"));
-        int y2 = Integer.parseInt(el.getAttribute("y2"));
+        try {
+            int x1 = Integer.parseInt(el.getAttribute("x1"));
+            int y1 = Integer.parseInt(el.getAttribute("y1"));
+            int x2 = Integer.parseInt(el.getAttribute("x2"));
+            int y2 = Integer.parseInt(el.getAttribute("y2"));
 
-        // a jogada é validada na GameRoom
-        currentGame.handleMove(this, x1, y1, x2, y2);
+            currentGame.handleMove(this, x1, y1, x2, y2);
+        } catch (NumberFormatException e) {
+            sendErrorResponse("[ERRO] Coordenadas invalidas");
+        }
     }
 
-    public void sendXML(String xml) {
-        if (out != null) {
-            out.println(xml);
-            out.flush();
+    private Document createBaseDocument() {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            Document doc = dbf.newDocumentBuilder().newDocument();
+            Element root = doc.createElement("protocol");
+            doc.appendChild(root);
+            return doc;
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao criar Documento DOM");
         }
+    }
+
+    protected void sendErrorResponse(String message) {
+        Document doc = createBaseDocument();
+        Element resp = doc.createElement("response");
+        resp.setAttribute("status", "fail");
+        resp.setAttribute("msg", message);
+        doc.getDocumentElement().appendChild(resp);
+        sendValidatedXML(doc);
+    }
+
+    public void sendValidatedXML(Document doc) {
+        try {
+            String xml = XMLMessageBuilder.toString(doc);
+            if (XMLValidator.validate(xml, XSD_PATH)) {
+                if (out != null) {
+                    out.println(xml);
+                }
+            } else {
+                System.err.println("[ERRO] XML de saida invalido: " + xml);
+            }
+        } catch (Exception e) {
+            System.err.println("[ERRO] Falha no envio: " + e.getMessage());
+        }
+    }
+
+    private Node getFirstElementChild(Node parent) {
+        NodeList nl = parent.getChildNodes();
+        for (int i = 0; i < nl.getLength(); i++) {
+            if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) return nl.item(i);
+        }
+        return null;
     }
 
     public String getNickname() { return nickname; }
     public void setGameSession(GameRoom room) { this.currentGame = room; }
 
     private void cleanup() {
-        System.out.println("[Handler] O Cliente " + (nickname != null ? nickname : "") + " desligou-se.");
+        System.out.println("[Handler] Conexão encerrada: " + (nickname != null ? nickname : "Anonimo"));
+        Server.removeFromLobby(this);
         try {
             socket.close();
-            // lógica para remover o jogador da lista de espera do Server
         } catch (IOException e) { /* ignore */ }
     }
 }

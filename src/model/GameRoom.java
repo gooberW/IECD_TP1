@@ -2,6 +2,9 @@ package model;
 
 import server.ClientHandler;
 import utils.PlayerDB;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.util.Random;
 import java.util.List;
 
@@ -27,66 +30,82 @@ public class GameRoom {
     }
 
     private void broadcastGameStart() {
-        player1.sendXML("<protocol><match start='true' opponent='" + player2.getNickname() + "' playerRole='1'/></protocol>");
-        player2.sendXML("<protocol><match start='true' opponent='" + player1.getNickname() + "' playerRole='2'/></protocol>");
+        // Criar XML para o Jogador 1
+        Document doc1 = createBaseDocument();
+        Element match1 = doc1.createElement("match");
+        match1.setAttribute("start", "true");
+        match1.setAttribute("opponent", player2.getNickname());
+        match1.setAttribute("playerRole", "1");
+        doc1.getDocumentElement().appendChild(match1);
+        player1.sendValidatedXML(doc1);
+
+        // Criar XML para o Jogador 2
+        Document doc2 = createBaseDocument();
+        Element match2 = doc2.createElement("match");
+        match2.setAttribute("start", "true");
+        match2.setAttribute("opponent", player1.getNickname());
+        match2.setAttribute("playerRole", "2");
+        doc2.getDocumentElement().appendChild(match2);
+        player2.sendValidatedXML(doc2);
+
         broadcastGameState();
     }
 
     public synchronized void handleMove(ClientHandler sender, int x1, int y1, int x2, int y2) {
         if (sender != currentTurn) {
-            sender.sendXML("<protocol><response status='fail' msg='Nao e o teu turno!'/></protocol>");
+            sendError(sender, "Não é o teu turno!");
             return;
         }
 
-        boolean closedBox = board.makeMove(x1, y1, x2, y2, sender.getNickname());
-        this.lastMoveCoords = String.format("%d,%d-%d,%d", x1, y1, x2, y2);
+        try {
+            boolean closedBox = board.makeMove(x1, y1, x2, y2, sender.getNickname());
+            this.lastMoveCoords = x1 + "," + y1 + "-" + x2 + "," + y2;
 
-        if (!closedBox) {
-            currentTurn = (currentTurn == player1) ? player2 : player1;
-        }
+            if (!closedBox) {
+                currentTurn = (currentTurn == player1) ? player2 : player1;
+            }
 
-        broadcastGameState();
+            broadcastGameState();
 
-        if (board.isGameOver()) {
-            broadcastGameOver();
+            if (board.isGameOver()) {
+                broadcastGameOver();
+            }
+        } catch (Exception e) {
+            sendError(sender, "Jogada inválida: " + e.getMessage());
         }
     }
 
     private void broadcastGameState() {
-        String updateXML = generateUpdateXML();
-        player1.sendXML(updateXML);
-        player2.sendXML(updateXML);
+        Document doc = generateUpdateDocument();
+        player1.sendValidatedXML(doc);
+        player2.sendValidatedXML(doc);
     }
 
-    private String generateUpdateXML() {
-        int p1Score = board.getScore(player1.getNickname());
-        int p2Score = board.getScore(player2.getNickname());
+    private Document generateUpdateDocument() {
+        Document doc = createBaseDocument();
+        Element update = doc.createElement("update");
 
-        String scores = String.format("%s: %d, %s: %d",
-                player1.getNickname(), p1Score,
-                player2.getNickname(), p2Score);
+        // Atributos básicos
+        update.setAttribute("next", currentTurn.getNickname());
+        update.setAttribute("scores", calculateScoresString());
+        update.setAttribute("lastMove", lastMoveCoords);
 
-        // vai ser tipo x,y:Letra
-        StringBuilder boxesInfo = new StringBuilder();
+        // Lógica das Boxes (i,j:L|...)
+        StringBuilder sb = new StringBuilder();
         int boxLimit = board.getGridSize() - 1;
-
         for (int i = 0; i < boxLimit; i++) {
             for (int j = 0; j < boxLimit; j++) {
                 String owner = board.getBoxOwner(i, j);
                 if (owner != null && !owner.isEmpty()) {
-                    if (boxesInfo.length() > 0) boxesInfo.append("|");
-                    // envia apenas a inicial
-                    boxesInfo.append(i).append(",").append(j).append(":").append(owner.charAt(0));
+                    if (sb.length() > 0) sb.append("|");
+                    sb.append(i).append(",").append(j).append(":").append(owner.charAt(0));
                 }
             }
         }
+        update.setAttribute("boxes", sb.toString());
 
-        return "<protocol>" +
-                "<update next='" + currentTurn.getNickname() + "' " +
-                "scores='" + scores + "' " +
-                "lastMove='" + lastMoveCoords + "' " +
-                "boxes='" + boxesInfo.toString() + "'/>" +
-                "</protocol>";
+        doc.getDocumentElement().appendChild(update);
+        return doc;
     }
 
     private void broadcastGameOver() {
@@ -109,14 +128,44 @@ public class GameRoom {
 
         updatePlayerStats(winner, loser);
 
-        String finalXML = "<protocol><gameOver msg='" + result + "'/></protocol>";
-        player1.sendXML(finalXML);
-        player2.sendXML(finalXML);
+        Document doc = createBaseDocument();
+        Element gameOver = doc.createElement("gameOver");
+        gameOver.setAttribute("msg", result);
+        doc.getDocumentElement().appendChild(gameOver);
+
+        player1.sendValidatedXML(doc);
+        player2.sendValidatedXML(doc);
+    }
+
+    private Document createBaseDocument() {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            Document doc = dbf.newDocumentBuilder().newDocument();
+            Element root = doc.createElement("protocol");
+            doc.appendChild(root);
+            return doc;
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao criar documento DOM");
+        }
+    }
+
+    private void sendError(ClientHandler player, String msg) {
+        Document doc = createBaseDocument();
+        Element resp = doc.createElement("response");
+        resp.setAttribute("status", "fail");
+        resp.setAttribute("msg", msg);
+        doc.getDocumentElement().appendChild(resp);
+        player.sendValidatedXML(doc);
+    }
+
+    private String calculateScoresString() {
+        return String.format("%s: %d, %s: %d",
+                player1.getNickname(), board.getScore(player1.getNickname()),
+                player2.getNickname(), board.getScore(player2.getNickname()));
     }
 
     private void updatePlayerStats(String winner, String loser) {
         if (winner == null && loser == null) return;
-
         synchronized (PlayerDB.class) {
             List<Player> players = PlayerDB.load();
             for (Player p : players) {

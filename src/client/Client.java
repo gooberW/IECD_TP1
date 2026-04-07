@@ -1,5 +1,13 @@
 package client;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import utils.XMLMessageBuilder;
+import utils.XMLValidator;
+
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
@@ -7,16 +15,15 @@ import java.util.Scanner;
 public class Client {
     public final static String DEFAULT_HOST = "localhost";
     public final static int DEFAULT_PORT = 5025;
+    private static final String XSD_PATH = "src/data/protocol.xsd";
 
     private static PrintWriter out;
     private static boolean running = true;
     private static String myNickname = "";
 
-    // guarda as linhas ocupadas: "0,0-0,1"
     private static java.util.Set<String> occupiedLines = new java.util.HashSet<>();
-    // guarda o dono da caixa: "0,0" -> "A"
     private static java.util.Map<String, String> conqueredBoxes = new java.util.HashMap<>();
-    private static int currentGridSize = 3; // Podes receber isto no <match>
+    private static int currentGridSize = 3;
 
     public static void main(String[] args) {
         try (Socket socket = new Socket(DEFAULT_HOST, DEFAULT_PORT)) {
@@ -24,14 +31,16 @@ public class Client {
             Scanner in = new Scanner(socket.getInputStream());
             Scanner keyboard = new Scanner(System.in);
 
-            System.out.println("=== PONTOS E CAIXAS (Dots & Boxes) ===");
+            System.out.println("=== Dots & Boxes ===");
 
             Thread listener = new Thread(() -> {
                 while (in.hasNextLine()) {
-                    String response = in.nextLine();
-                    processServerMessage(response);
+                    String xmlLine = in.nextLine();
+                    if (XMLValidator.validate(xmlLine, XSD_PATH)) {
+                        processServerMessage(xmlLine);
+                    }
                 }
-                System.out.println("\n[CLIENT] Ligação perdida com o servidor.");
+                System.out.println("\n[CLIENT] Ligação perdida.");
                 running = false;
             });
             listener.setDaemon(true);
@@ -47,173 +56,153 @@ public class Client {
                 if (xml != null) {
                     out.println(xml);
                 } else {
-                    System.out.println("[CLIENT] Comando inválido. Use: login, register ou move.");
+                    System.out.println("[CLIENT] Comando inválido ou erro ao gerar XML.");
                 }
             }
 
         } catch (IOException e) {
-            System.err.println("[CLIENT] Erro na ligação: " + e.getMessage());
+            System.err.println("[CLIENT] Erro: " + e.getMessage());
         }
     }
 
     /**
-     * Transforma comandos simples de consola no XML do protocolo.
+     * Gera a mensagem de saída
      */
     private static String parseInputToXML(String input) {
-        String[] parts = input.split(" ");
-        String cmd = parts[0].toLowerCase();
-
         try {
+            String[] parts = input.split(" ");
+            String cmd = parts[0].toLowerCase();
+
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            Element root = doc.createElement("protocol");
+            doc.appendChild(root);
+            Element action = doc.createElement(cmd);
+
             switch (cmd) {
-                case "login": // login nick pass
-                    return String.format("<protocol><login nickname='%s' password='%s'/></protocol>", parts[1], parts[2]);
-
-                case "register": // register nick pass age nat photo
-                    return String.format("<protocol><register nickname='%s' password='%s' age='%s' nationality='%s' photo='%s'/></protocol>",
-                            parts[1], parts[2], parts[3], parts[4], parts[5]);
-
+                case "login":
+                    action.setAttribute("nickname", parts[1]);
+                    action.setAttribute("password", parts[2]);
+                    break;
+                case "register":
+                    action.setAttribute("nickname", parts[1]);
+                    action.setAttribute("password", parts[2]);
+                    action.setAttribute("age", parts[3]);
+                    action.setAttribute("nationality", parts[4]);
+                    action.setAttribute("photo", parts[5]);
+                    break;
                 case "play":
-                    return "<protocol><play></play></protocol>";
-
-                case "move": // move x1 y1 x2 y2
-                    return String.format("<protocol><move x1='%s' y1='%s' x2='%s' y2='%s'/></protocol>",
-                            parts[1], parts[2], parts[3], parts[4]);
+                    break;
+                case "move":
+                    action.setAttribute("x1", parts[1]);
+                    action.setAttribute("y1", parts[2]);
+                    action.setAttribute("x2", parts[3]);
+                    action.setAttribute("y2", parts[4]);
+                    break;
+                default: return null;
             }
+
+            root.appendChild(action);
+            return XMLMessageBuilder.toString(doc);
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /**
+     * Processa as mensagens de entrada
+     */
+    private static void processServerMessage(String xml) {
+        try {
+            // string -> doc
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                    .parse(new ByteArrayInputStream(xml.getBytes()));
+            doc.getDocumentElement().normalize();
+
+            Element root = doc.getDocumentElement();
+            Node commandNode = getFirstElementChild(root);
+            if (commandNode == null) return;
+
+            String tagName = commandNode.getNodeName();
+            Element el = (Element) commandNode;
+
+            if (tagName.equals("response")) {
+                String status = el.getAttribute("status");
+                String msg = el.getAttribute("msg");
+                System.out.println((status.equals("success") ? "[:)] " : "[:(] ") + msg);
+
+                if (status.equals("success") && el.hasAttribute("nickname")) {
+                    myNickname = el.getAttribute("nickname");
+                }
+            }
+            else if (tagName.equals("match")) {
+                System.out.println("\n[D&B] Partida contra: " + el.getAttribute("opponent"));
+                occupiedLines.clear();
+                conqueredBoxes.clear();
+            }
+            else if (tagName.equals("update")) {
+                String last = el.getAttribute("lastMove");
+                if (!last.isEmpty()) occupiedLines.add(normalizeKey(last));
+
+                String boxes = el.getAttribute("boxes");
+                if (!boxes.isEmpty()) parseBoxes(boxes);
+
+                drawBoard();
+                System.out.println("Pontuação: " + el.getAttribute("scores"));
+                System.out.println("Próximo: " + el.getAttribute("next"));
+                if (el.getAttribute("next").equalsIgnoreCase(myNickname)) {
+                    System.out.println(">>> É A TUA VEZ! <<<");
+                }
+            }
+            else if (tagName.equals("gameOver")) {
+                System.out.println("\n=== FIM DO JOGO ===\n" + el.getAttribute("msg"));
+            }
+
+        } catch (Exception e) {
+            System.err.println("Erro ao processar mensagem do servidor.");
+        }
+    }
+
+    private static Node getFirstElementChild(Node parent) {
+        NodeList nl = parent.getChildNodes();
+        for (int i = 0; i < nl.getLength(); i++) {
+            if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) return nl.item(i);
         }
         return null;
     }
 
-    /**
-     * Processa o XML vindo do servidor e mostra na consola.
-     */
-    private static void processServerMessage(String xml) {
-
-        if (xml.contains("<response")) {
-            String status = extractAttribute(xml, "status");
-            String msg = extractAttribute(xml, "msg");
-            if (!msg.equals("N/A")) {
-                String icon = status.equals("success") ? "[:)] " : "[:(] ERRO: ";
-                System.out.println("\n" + icon + msg);
-            }
-            // guarda o nickname se o login correr bem
-            if (status.equals("success") && xml.contains("nickname='")) {
-                myNickname = extractAttribute(xml, "nickname");
-            }
-        }
-
-        if (xml.contains("<match")) {
-            String opp = extractAttribute(xml, "opponent");
-            System.out.println("\n[D&B] Partida encontrada contra: " + opp);
-            occupiedLines.clear();
-            conqueredBoxes.clear();
-        }
-
-        // atualizacoes do yabuleiro
-        if (xml.contains("<update")) {
-            // linahs
-            String last = extractAttribute(xml, "lastMove");
-            if (!last.equals("N/A") && !last.isEmpty()) {
-                occupiedLines.add(normalizeKey(last));
-            }
-
-            // caixas
-            String boxesAttr = extractAttribute(xml, "boxes");
-            if (!boxesAttr.equals("N/A") && !boxesAttr.isEmpty()) {
-                parseBoxes(boxesAttr);
-            }
-
-            drawBoard();
-
-            //turno e pontos
-            String next = extractAttribute(xml, "next");
-            String scores = extractAttribute(xml, "scores");
-
-            System.out.println("Pontuação: " + scores);
-            if (!next.equals("N/A")) {
-                System.out.println("Próximo a jogar: " + next);
-                if (next.equalsIgnoreCase(myNickname)) {
-                    System.out.println("\n>>> É A TUA VEZ! (move x1 y1 x2 y2) <<<");
-                }
-            }
-        }
-
-        // ganme over
-        if (xml.contains("<gameOver")) {
-            System.out.println("\n=== FIM DO JOGO ===");
-            System.out.println(extractAttribute(xml, "msg"));
-        }
-    }
-
     private static void parseBoxes(String data) {
-        // vem no formato x,y:Letra|x,y:Letra|...
         String[] pairs = data.split("\\|");
         for (String pair : pairs) {
             String[] parts = pair.split(":");
-            if (parts.length == 2) {
-                conqueredBoxes.put(parts[0], parts[1]);
-            }
-        }
-    }
-
-    private static String extractAttribute(String xml, String attr) {
-        try {
-            // procura por nome_do_atributo='
-            String search = attr + "='";
-            int startPos = xml.indexOf(search);
-
-            if (startPos == -1) return "N/A"; // nao foi encontrado
-
-            startPos += search.length();
-            int endPos = xml.indexOf("'", startPos);
-
-            if (endPos == -1) return "N/A";
-
-            return xml.substring(startPos, endPos);
-        } catch (Exception e) {
-            return "Erro ao extrair o atributo: " + attr;
+            if (parts.length == 2) conqueredBoxes.put(parts[0], parts[1]);
         }
     }
 
     private static void showMenu() {
-        System.out.println("Comandos disponíveis:");
-        System.out.println("  login <nick> <pass>");
-        System.out.println("  register <nick> <pass> <age> <nat> <photo>");
-        System.out.println("  play");
-        System.out.println("  sair");
+        System.out.println("\nComandos: \nlogin <nickname> <password>" +
+                "\nregister <nickname> <password> <age> <nat> <photo> \nplay \nsair");
     }
 
     private static void drawBoard() {
-        System.out.println("\n--- TABULEIRO (Dots & Boxes) ---");
-
-        //imprime os números das colunas no topo
+        System.out.println("\n--- TABULEIRO ---");
         System.out.print("  ");
         for (int j = 0; j < currentGridSize; j++) System.out.print(j + "   ");
         System.out.println();
-
         for (int i = 0; i < currentGridSize; i++) {
-            System.out.print(i + " "); // Número da linha lateral
+            System.out.print(i + " ");
             for (int j = 0; j < currentGridSize; j++) {
-                System.out.print("."); // O Ponto
+                System.out.print(".");
                 if (j < currentGridSize - 1) {
-                    String key = getLineKey(i, j, i, j + 1);
-                    System.out.print(occupiedLines.contains(key) ? "---" : "   ");
+                    System.out.print(occupiedLines.contains(getLineKey(i, j, i, j + 1)) ? "---" : "   ");
                 }
             }
             System.out.println();
-
             if (i < currentGridSize - 1) {
                 System.out.print("  ");
                 for (int j = 0; j < currentGridSize; j++) {
-                    String vKey = getLineKey(i, j, i + 1, j);
-                    System.out.print(occupiedLines.contains(vKey) ? "|" : " ");
-
-                    // desenha a inicial do dono da caixa no meio
+                    System.out.print(occupiedLines.contains(getLineKey(i, j, i + 1, j)) ? "|" : " ");
                     if (j < currentGridSize - 1) {
-                        String boxKey = i + "," + j;
-                        String owner = conqueredBoxes.getOrDefault(boxKey, " ");
-                        System.out.print(" " + owner + " ");
+                        System.out.print(" " + conqueredBoxes.getOrDefault(i + "," + j, " ") + " ");
                     }
                 }
                 System.out.println();
@@ -229,21 +218,10 @@ public class Client {
     public static String normalizeKey(String key) {
         try {
             String[] points = key.split("-");
-            String[] p1 = points[0].split(",");
-            String[] p2 = points[1].split(",");
-
-            int x1 = Integer.parseInt(p1[0]);
-            int y1 = Integer.parseInt(p1[1]);
-            int x2 = Integer.parseInt(p2[0]);
-            int y2 = Integer.parseInt(p2[1]);
-
-            if (x1 < x2 || (x1 == x2 && y1 < y2)) {
-                return x1 + "," + y1 + "-" + x2 + "," + y2;
-            } else {
-                return x2 + "," + y2 + "-" + x1 + "," + y1;
-            }
-        } catch (Exception e) {
-            return key;
-        }
+            return getLineKey(
+                    Integer.parseInt(points[0].split(",")[0]), Integer.parseInt(points[0].split(",")[1]),
+                    Integer.parseInt(points[1].split(",")[0]), Integer.parseInt(points[1].split(",")[1])
+            );
+        } catch (Exception e) { return key; }
     }
 }
