@@ -8,7 +8,13 @@ import java.util.*;
 //servidor concorrente
 public class Server {
     public final static int DEFAULT_PORT = 5025;
+    // usa-se ynchronizedList porque o ArrayList não é thread-safe.
+    // como várias threads (ClientHandlers) podem tentar adicionar ou remover jogadores
+    // ao mesmo tempo, a sincronização evita a corrupção da memória e exceções de modificação.
     private static final List<ClientHandler> lobby = Collections.synchronizedList(new ArrayList<>());
+
+    // ssa-se synchronizedMap pela mesma razão, mas desta vez para não se mexer nos lobbies em simultaneo.
+    // o mapa fica | tamanho tabuleiro (int) - [JogadorA, JogadorB, ...] |
     private static final Map<Integer, List<ClientHandler>> lobbies = Collections.synchronizedMap(new HashMap<>());
 
     public static void main(String[] args) {
@@ -18,6 +24,7 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("[SERVIDOR] Conexão aceite: " + clientSocket.getRemoteSocketAddress());
 
+                //threads virtuais sao menos pesadas que threads normais
                 Thread.ofVirtual().start(() -> {
                     ClientHandler handler = new ClientHandler(clientSocket);
                     handler.run();
@@ -29,7 +36,7 @@ public class Server {
     }
 
     public static void joinLobby(ClientHandler player, int size) {
-        synchronized (lobbies) {
+        synchronized (lobbies) { // monitor para que nao hajam race conditions
             List<ClientHandler> queue = lobbies.computeIfAbsent(size, k -> new ArrayList<>());
 
             if (queue.contains(player)) {
@@ -49,7 +56,7 @@ public class Server {
     }
 
     public static void removeFromLobby(ClientHandler player) {
-        synchronized (lobby) {
+        synchronized (lobby) { // monitor para que nao hajam race conditions
             lobby.remove(player);
         }
     }

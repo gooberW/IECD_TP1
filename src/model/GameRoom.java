@@ -53,6 +53,14 @@ public class GameRoom {
         broadcastGameState();
     }
 
+    /**
+     *
+     * @param sender
+     * @param x1
+     * @param y1
+     * @param x2
+     * @param y2
+     */
     public synchronized void handleMove(ClientHandler sender, int x1, int y1, int x2, int y2) {
         if (sender != currentTurn) {
             sendError(sender, "Não é o teu turno!");
@@ -88,6 +96,10 @@ public class GameRoom {
         player2.sendValidatedXML(doc);
     }
 
+    /**
+     * Converte o estado do jogo num documento para ser enviado aos clientes (XML)
+     * @return
+     */
     private Document generateUpdateDocument() {
         Document doc = createBaseDocument();
         Element update = doc.createElement("update");

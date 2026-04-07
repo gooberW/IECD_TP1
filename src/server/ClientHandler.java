@@ -18,12 +18,17 @@ import java.net.Socket;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Gere a comunicação individual com um cliente. Esta classe processa o ciclo de vida
+ * do jogador, desde o login até ao fim da ligação, funciona como um
+ * Skeleton (ref: jogo do galo do professor).
+ */
 public class ClientHandler extends Thread {
     private final Socket socket;
-    private PrintWriter out;
+    private PrintWriter out; // para onde vai escrever o XML
     private String nickname;
     private GameRoom currentGame;
-    private boolean authenticated = false;
+    private boolean authenticated = false; // ta logged in?
 
     private static final String XSD_PATH = "src/data/protocol.xsd";
 
@@ -42,7 +47,7 @@ public class ClientHandler extends Thread {
 
             while (in.hasNextLine()) {
                 String xmlReceived = in.nextLine();
-
+                // recebe o XML e verifica se é valido
                 if (!XMLValidator.validate(xmlReceived, XSD_PATH)) {
                     sendErrorResponse("[HANDLER] XML invalido face ao XSD");
                     continue;
@@ -51,12 +56,17 @@ public class ClientHandler extends Thread {
                 processRequest(xmlReceived);
             }
         } catch (IOException e) {
-            System.err.println("[HANDLER] Erro na ligacao com " + (nickname != null ? nickname : "anonimo") + ": " + e.getMessage());
+            System.err.println("[HANDLER] Erro na ligacao com " +
+                    (nickname != null ? nickname : "anonimo") + ": " + e.getMessage());
         } finally {
             cleanup();
         }
     }
 
+    /**
+     * Recebe o XML enviado do cliente, e processa-o consoante o comando.
+     * @param xml
+     */
     private void processRequest(String xml) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -84,6 +94,10 @@ public class ClientHandler extends Thread {
         }
     }
 
+    /**
+     * Vai buscar os elementos precisos para o login
+     * @param el
+     */
     private void handleLogin(Element el) {
         String nick = el.getAttribute("nickname");
         String pass = el.getAttribute("password");
@@ -92,11 +106,10 @@ public class ClientHandler extends Thread {
         Document doc = createBaseDocument();
         Element resp = doc.createElement("response");
 
-        Player foundPlayer = players.stream()
-                .filter(p -> p.getNickname().equals(nick) && p.getPassword().equals(pass))
-                .findFirst()
-                .orElse(null);
+        // procura o jogador na lista
+        Player foundPlayer = findPlayer(players, nick, pass);
 
+        // se encontrar, mete os atributos na resposta a enviar para o cliente
         if (foundPlayer != null) {
             this.nickname = nick;
             this.authenticated = true;
@@ -120,7 +133,7 @@ public class ClientHandler extends Thread {
         Document doc = createBaseDocument();
         Element resp = doc.createElement("response");
 
-        boolean exists = players.stream().anyMatch(p -> p.getNickname().equalsIgnoreCase(nick));
+        boolean exists = (findPlayer(players, nick) != null);
 
         if (exists) {
             resp.setAttribute("status", "fail");
@@ -232,6 +245,20 @@ public class ClientHandler extends Thread {
         NodeList nl = parent.getChildNodes();
         for (int i = 0; i < nl.getLength(); i++) {
             if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) return nl.item(i);
+        }
+        return null;
+    }
+
+    private Player findPlayer(List<Player> players, String nickname) {
+        return findPlayer(players, nickname, null);
+    }
+
+    private Player findPlayer(List<Player> players, String nickname, String password) {
+        for (Player player : players) {
+            if (player.getNickname().equals(nickname) &&
+                    (password == null || player.getPassword().equals(password))) {
+                return player;
+            }
         }
         return null;
     }
