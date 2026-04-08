@@ -6,7 +6,6 @@ public class Line {
     private final Dot d1;
     private final Dot d2;
     private boolean occupied = false;
-    private String ownerNickname; // quem desenhou a linha
 
     public Line(Dot a, Dot b) {
         // d1 vai ser sempre o ponto "menor" para evitar duplicados invertidos
@@ -21,9 +20,16 @@ public class Line {
 
     public boolean isOccupied() { return occupied; }
 
-    public void setOccupied(boolean occupied, String ownerNickname) {
+    public void setOccupied(boolean occupied) {
         this.occupied = occupied;
-        this.ownerNickname = ownerNickname;
+    }
+
+    public Dot getDot1(){
+        return d1;
+    }
+
+    public Dot getDot2(){
+        return d2;
     }
 
     @Override
@@ -37,5 +43,10 @@ public class Line {
     @Override
     public int hashCode() {
         return Objects.hash(d1, d2);
+    }
+
+    @Override
+    public String toString() {
+        return d1 + "-" + d2;
     }
 }

@@ -5,7 +5,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import utils.XMLMessageBuilder;
-import utils.XMLValidator;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;

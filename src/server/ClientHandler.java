@@ -1,6 +1,8 @@
 package server;
 
 import controller.GameRoom;
+import model.Dot;
+import model.Line;
 import model.Player;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -199,7 +201,13 @@ public class ClientHandler extends Thread {
             int x2 = Integer.parseInt(el.getAttribute("x2"));
             int y2 = Integer.parseInt(el.getAttribute("y2"));
 
-            currentGame.handleMove(this, x1, y1, x2, y2);
+            Dot d1 = new Dot(x1, y1);
+            Dot d2 = new Dot(x2, y2);
+
+            Line lineToPlay = new Line(d1, d2);
+
+
+            currentGame.handleMove(this, lineToPlay);
         } catch (NumberFormatException e) {
             sendErrorResponse("[ERRO] Coordenadas invalidas");
         }

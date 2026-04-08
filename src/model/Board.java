@@ -31,12 +31,15 @@ public class Board {
         }
     }
 
-    public boolean makeMove(int x1, int y1, int x2, int y2, String playerNickname) {
-        Line line = getLine(x1, y1, x2, y2);
+    public boolean makeMove(Line line, String playerNickname) {
+        //a linha recebida vem do xml, por isso temos de procurar a linha "real" correspondente
+        // que esta na lista
+        Line realLine = getLine(line.getDot1().getX(), line.getDot1().getY(),
+                                line.getDot2().getX(), line.getDot2().getY());  // vai buscar a lista
 
-        if (line == null || line.isOccupied()) return false;
+        if (realLine == null || realLine.isOccupied()) return false;
 
-        line.setOccupied(true, playerNickname);
+        realLine.setOccupied(true);
         boolean closedAnyBox = false;
 
         for (Box box : boxes) {
@@ -46,11 +49,6 @@ public class Board {
             }
         }
         return closedAnyBox;
-    }
-
-    public boolean isLineOccupied(int x1, int y1, int x2, int y2) {
-        Line l = getLine(x1, y1, x2, y2);
-        return l != null && l.isOccupied();
     }
 
     public boolean isGameOver() {

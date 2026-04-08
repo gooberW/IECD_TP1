@@ -2,6 +2,7 @@ package controller;
 
 import model.Board;
 import model.Player;
+import model.Line;
 import server.ClientHandler;
 import utils.PlayerDB;
 import org.w3c.dom.Document;
@@ -58,25 +59,22 @@ public class GameRoom {
     /**
      *
      * @param sender
-     * @param x1
-     * @param y1
-     * @param x2
-     * @param y2
+     * @param line
      */
-    public synchronized void handleMove(ClientHandler sender, int x1, int y1, int x2, int y2) {
+    public synchronized void handleMove(ClientHandler sender, Line line) {
         if (sender != currentTurn) {
             sendError(sender, "Não é o teu turno!");
             return;
         }
 
-        if (board.isLineOccupied(x1, y1, x2, y2)) {
+        if (line.isOccupied()) {
             sendError(sender, "Essa linha já foi traçada! Escolhe outra.");
             return; // retorna sem mudar o currentTurn, assim o jogador tenta outra vez
         }
 
         try {
-            boolean closedBox = board.makeMove(x1, y1, x2, y2, sender.getNickname());
-            this.lastMoveCoords = x1 + "," + y1 + "-" + x2 + "," + y2;
+            boolean closedBox = board.makeMove(line, sender.getNickname());
+            this.lastMoveCoords = line.toString();
 
             if (!closedBox) {
                 currentTurn = (currentTurn == player1) ? player2 : player1;
