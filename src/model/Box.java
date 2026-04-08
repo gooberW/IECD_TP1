@@ -22,17 +22,14 @@ public class Box {
      * atribui o dono e retorna true.
      */
     public boolean checkCompleted(String currentPlayerNickname) {
-        if (ownerNickname != null) return false; // Já estava fechada antes
+        if (ownerNickname != null && isClosed()) return false; // Já estava fechada antes
 
-        for (Line line : sides) {
-            if (!line.isOccupied()) {
-                return false; // Se houver uma linha vazia, não está completa
-            }
+        if(isClosed()) {
+            this.ownerNickname = currentPlayerNickname;
+            return true;
+        } else {
+            return false;
         }
-
-        // Se chegou aqui, todas as linhas estão ocupadas
-        this.ownerNickname = currentPlayerNickname;
-        return true;
     }
 
     public String getOwnerNickname() {
@@ -40,7 +37,12 @@ public class Box {
     }
 
     public boolean isClosed() {
-        return ownerNickname != null;
+        for (Line line : sides) {
+            if (!line.isOccupied()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public int getRow() {
