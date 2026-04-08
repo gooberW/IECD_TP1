@@ -1,6 +1,6 @@
 package server;
 
-import model.GameRoom;
+import controller.GameRoom;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;

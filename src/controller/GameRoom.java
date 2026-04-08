@@ -1,5 +1,7 @@
-package model;
+package controller;
 
+import model.Board;
+import model.Player;
 import server.ClientHandler;
 import utils.PlayerDB;
 import org.w3c.dom.Document;

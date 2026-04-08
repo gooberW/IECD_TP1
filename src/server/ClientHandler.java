@@ -1,6 +1,6 @@
 package server;
 
-import model.GameRoom;
+import controller.GameRoom;
 import model.Player;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
