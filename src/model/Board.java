@@ -66,7 +66,7 @@ public class Board {
     public int getScore(Player player) {
         int score = 0;
         for (Box box : boxes) {
-            if (player.equals(box.getOwner())) {
+            if (box.getOwner() == player) {
                 score++;
             }
         }
