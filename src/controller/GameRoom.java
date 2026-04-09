@@ -14,6 +14,8 @@ import java.util.List;
 public class GameRoom {
     private final ClientHandler player1;
     private final ClientHandler player2;
+    private final Player playerModel1;
+    private final Player playerModel2;
     private final Board board;
     private ClientHandler currentTurn;
     private String lastMoveCoords = "";
@@ -21,6 +23,8 @@ public class GameRoom {
     public GameRoom(ClientHandler p1, ClientHandler p2, int gridSize) {
         this.player1 = p1;
         this.player2 = p2;
+        this.playerModel1 = p1.getPlayer();
+        this.playerModel2 = p2.getPlayer();
         this.board = new Board(gridSize);
 
         p1.setGameSession(this);
@@ -73,7 +77,7 @@ public class GameRoom {
         }
 
         try {
-            boolean closedBox = board.makeMove(line, sender.getNickname());
+            boolean closedBox = board.makeMove(line, sender.getPlayer());
             this.lastMoveCoords = line.toString();
 
             if (!closedBox) {
@@ -112,10 +116,10 @@ public class GameRoom {
         int boxLimit = board.getGridSize() - 1;
         for (int i = 0; i < boxLimit; i++) {
             for (int j = 0; j < boxLimit; j++) {
-                String owner = board.getBoxOwner(i, j);
-                if (owner != null && !owner.isEmpty()) {
+                Player owner = board.getBoxOwner(i, j);
+                if (owner != null) {
                     if (sb.length() > 0) sb.append("|");
-                    sb.append(i).append(",").append(j).append(":").append(owner.charAt(0));
+                    sb.append(i).append(",").append(j).append(":").append(owner);
                 }
             }
         }
@@ -126,19 +130,19 @@ public class GameRoom {
     }
 
     private void broadcastGameOver() {
-        int p1Score = board.getScore(player1.getNickname());
-        int p2Score = board.getScore(player2.getNickname());
+        int p1Score = board.getScore(player1.getPlayer());
+        int p2Score = board.getScore(player2.getPlayer());
 
         String result;
-        String winner = null;
-        String loser = null;
+        Player winner = null;
+        Player loser = null;
 
         if (p1Score > p2Score) {
             result = "Vencedor: " + player1.getNickname();
-            winner = player1.getNickname(); loser = player2.getNickname();
+            winner = playerModel1; loser = playerModel2;
         } else if (p2Score > p1Score) {
             result = "Vencedor: " + player2.getNickname();
-            winner = player2.getNickname(); loser = player1.getNickname();
+            winner = playerModel2; loser = playerModel1;
         } else {
             result = "Empate!";
         }
@@ -177,19 +181,22 @@ public class GameRoom {
 
     private String calculateScoresString() {
         return String.format("%s: %d, %s: %d",
-                player1.getNickname(), board.getScore(player1.getNickname()),
-                player2.getNickname(), board.getScore(player2.getNickname()));
+                player1.getNickname(), board.getScore(player1.getPlayer()),
+                player2.getNickname(), board.getScore(player2.getPlayer()));
     }
 
-    private void updatePlayerStats(String winner, String loser) {
-        if (winner == null && loser == null) return;
+    private void updatePlayerStats(Player winner, Player loser) {
         synchronized (PlayerDB.class) {
-            List<Player> players = PlayerDB.load();
-            for (Player p : players) {
-                if (p.getNickname().equals(winner)) p.setTotalWins(p.getTotalWins() + 1);
-                if (p.getNickname().equals(loser)) p.setTotalLosses(p.getTotalLosses() + 1);
+            if (winner != null) winner.addWin();
+            if (loser  != null) loser.addLoss();
+            List<Player> all = PlayerDB.load();
+            for (Player p : all) {
+                if (winner != null && p.getNickname().equals(winner.getNickname()))
+                    p.setTotalWins(winner.getTotalWins());
+                if (loser != null && p.getNickname().equals(loser.getNickname()))
+                    p.setTotalLosses(loser.getTotalLosses());
             }
-            PlayerDB.save(players);
+            PlayerDB.save(all);
         }
     }
 }

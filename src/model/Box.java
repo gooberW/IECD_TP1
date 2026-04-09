@@ -2,7 +2,7 @@ package model;
 
 public class Box {
     private final Line[] sides; // as 4 linhas que formam o quadrado
-    private String ownerNickname; // armazena quem fechou a caixa (null se aberta)
+    private Player owner; // armazena quem fechou a caixa (null se aberta)
     private int row, col;
 
     public Box(Line[] sides, int row, int col) {
@@ -10,7 +10,7 @@ public class Box {
             throw new IllegalArgumentException("[BOX] Uma caixa deve ter exatamente 4 linhas.");
         }
         this.sides = sides;
-        this.ownerNickname = null;
+        this.owner = null;
 
         this.col = col;
         this.row = row;
@@ -21,19 +21,19 @@ public class Box {
      * Se todas as linhas estiverem ocupadas e a caixa ainda não tiver dono,
      * atribui o dono e retorna true.
      */
-    public boolean checkCompleted(String currentPlayerNickname) {
-        if (ownerNickname != null && isClosed()) return false; // Já estava fechada antes
+    public boolean checkCompleted(Player currentPlayer) {
+        if (owner != null && isClosed()) return false; // Já estava fechada antes
 
         if(isClosed()) {
-            this.ownerNickname = currentPlayerNickname;
+            this.owner = currentPlayer;
             return true;
         } else {
             return false;
         }
     }
 
-    public String getOwnerNickname() {
-        return ownerNickname;
+    public Player getOwner() {
+        return owner;
     }
 
     public boolean isClosed() {

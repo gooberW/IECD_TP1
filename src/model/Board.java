@@ -31,7 +31,7 @@ public class Board {
         }
     }
 
-    public boolean makeMove(Line line, String playerNickname) {
+    public boolean makeMove(Line line, Player player) {
         //a linha recebida vem do xml, por isso temos de procurar a linha "real" correspondente
         // que esta na lista
         Line realLine = getLine(line.getDot1().getX(), line.getDot1().getY(),
@@ -44,7 +44,7 @@ public class Board {
 
         for (Box box : boxes) {
             // checkCompleted deve retornar true apenas se a caixa ACABOU de ser fechada
-            if (box.checkCompleted(playerNickname)) {
+            if (box.checkCompleted(player)) {
                 closedAnyBox = true;
             }
         }
@@ -53,7 +53,7 @@ public class Board {
 
     public boolean isGameOver() {
         long conquistadas = boxes.stream()
-                .filter(box -> box.getOwnerNickname() != null)
+                .filter(box -> box.getOwner() != null)
                 .count();
 
         int totalPossivel = (gridSize - 1) * (gridSize - 1);
@@ -63,10 +63,10 @@ public class Board {
         return conquistadas == totalPossivel;
     }
 
-    public int getScore(String playerNickname) {
+    public int getScore(Player player) {
         int score = 0;
         for (Box box : boxes) {
-            if (playerNickname.equals(box.getOwnerNickname())) {
+            if (player.equals(box.getOwner())) {
                 score++;
             }
         }
@@ -89,10 +89,10 @@ public class Board {
         return temp.getDot1() + "-" + temp.getDot2();
     }
 
-    public String getBoxOwner(int row, int col) {
+    public Player getBoxOwner(int row, int col) {
         for (Box b : boxes) {
             if (b.getRow() == row && b.getCol() == col) {
-                return b.getOwnerNickname();
+                return b.getOwner();
             }
         }
         return null;

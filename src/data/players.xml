@@ -6,7 +6,7 @@
         <age>20</age>
         <nationality>PT</nationality>
         <photo>2</photo>
-        <wins>2</wins>
+        <wins>3</wins>
         <losses>1</losses>
         <avgTime>0</avgTime>
     </player>
@@ -17,7 +17,7 @@
         <nationality>FR</nationality>
         <photo>photo</photo>
         <wins>1</wins>
-        <losses>2</losses>
+        <losses>3</losses>
         <avgTime>0</avgTime>
     </player>
 </players>

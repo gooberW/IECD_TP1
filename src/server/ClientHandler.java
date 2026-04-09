@@ -28,9 +28,9 @@ import java.util.Scanner;
 public class ClientHandler extends Thread {
     private final Socket socket;
     private PrintWriter out; // para onde vai escrever o XML
-    private String nickname;
     private GameRoom currentGame;
-    private boolean authenticated = false; // ta logged in?
+
+    private Player authPlayer = null;
 
     private static final String XSD_PATH = "src/data/protocol.xsd";
 
@@ -59,7 +59,7 @@ public class ClientHandler extends Thread {
             }
         } catch (IOException e) {
             System.err.println("[HANDLER] Erro na ligacao com " +
-                    (nickname != null ? nickname : "anonimo") + ": " + e.getMessage());
+                    (getNickname()) + ": " + e.getMessage());
         } finally {
             cleanup();
         }
@@ -113,8 +113,7 @@ public class ClientHandler extends Thread {
 
         // se encontrar, mete os atributos na resposta a enviar para o cliente
         if (foundPlayer != null) {
-            this.nickname = nick;
-            this.authenticated = true;
+            this.authPlayer = foundPlayer;
             resp.setAttribute("status", "success");
             resp.setAttribute("nickname", nick);
             resp.setAttribute("wins", String.valueOf(foundPlayer.getTotalWins()));
@@ -160,7 +159,7 @@ public class ClientHandler extends Thread {
     }
 
     private void handlePlay(Element el) {
-        if (authenticated) {
+        if (authPlayer != null) {
             int size = 3; // default
             if (el.hasAttribute("size")) {
                 size = Integer.parseInt(el.getAttribute("size"));
@@ -190,7 +189,7 @@ public class ClientHandler extends Thread {
     }
 
     private void handleMove(Element el) {
-        if (!authenticated || currentGame == null) {
+        if (authPlayer == null || currentGame == null) {
             sendErrorResponse("[ERRO] Nao esta em jogo ativo");
             return;
         }
@@ -257,6 +256,18 @@ public class ClientHandler extends Thread {
         return null;
     }
 
+    public Player getPlayer() {
+        return this.authPlayer;
+    }
+
+    public String getNickname() {
+        if(authPlayer != null) {
+            return authPlayer.getNickname();
+        }
+
+        return "N/A";
+    }
+
     private Player findPlayer(List<Player> players, String nickname) {
         return findPlayer(players, nickname, null);
     }
@@ -271,11 +282,10 @@ public class ClientHandler extends Thread {
         return null;
     }
 
-    public String getNickname() { return nickname; }
     public void setGameSession(GameRoom room) { this.currentGame = room; }
 
     private void cleanup() {
-        System.out.println("[HANDLER] Conexão encerrada: " + (nickname != null ? nickname : "Anonimo"));
+        System.out.println("[HANDLER] Conexão encerrada: " + getNickname());
         Server.removeFromLobby(this);
         try {
             socket.close();
