@@ -20,4 +20,24 @@
         <losses>3</losses>
         <avgTime>0</avgTime>
     </player>
+    <player>
+        <nickname>a</nickname>
+        <password>a</password>
+        <age>10</age>
+        <nationality>PT</nationality>
+        <photo>photo</photo>
+        <wins>0</wins>
+        <losses>0</losses>
+        <avgTime>0</avgTime>
+    </player>
+    <player>
+        <nickname>b</nickname>
+        <password>b</password>
+        <age>10</age>
+        <nationality>PT</nationality>
+        <photo>photo</photo>
+        <wins>0</wins>
+        <losses>0</losses>
+        <avgTime>0</avgTime>
+    </player>
 </players>

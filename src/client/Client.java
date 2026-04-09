@@ -212,11 +212,20 @@ public class Client {
 
     private static void drawBoard() {
         System.out.println("\n--- TABULEIRO ---");
-        System.out.print("  ");
-        for (int j = 0; j < currentGridSize; j++) System.out.print(j + "   ");
-        System.out.println();
+        System.out.print("      ");
+        for (int j = 0; j < currentGridSize; j++) {
+            System.out.print(j + "   ");
+        }
+        System.out.println(" (y)");
+
         for (int i = 0; i < currentGridSize; i++) {
-            System.out.print(i + " ");
+            // Desenha o número da linha e o identificador do eixo Y apenas na linha do meio
+            if (i == currentGridSize / 2) {
+                System.out.print("(x) " + i + " ");
+            } else {
+                System.out.print("    " + i + " ");
+            }
+
             for (int j = 0; j < currentGridSize; j++) {
                 System.out.print(".");
                 if (j < currentGridSize - 1) {
@@ -224,8 +233,9 @@ public class Client {
                 }
             }
             System.out.println();
+
             if (i < currentGridSize - 1) {
-                System.out.print("  ");
+                System.out.print("      ");
                 for (int j = 0; j < currentGridSize; j++) {
                     System.out.print(occupiedLines.contains(getLineKey(i, j, i + 1, j)) ? "|" : " ");
                     if (j < currentGridSize - 1) {
