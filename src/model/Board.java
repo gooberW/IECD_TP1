@@ -84,12 +84,9 @@ public class Board {
     }
 
     private String getLineKey(int x1, int y1, int x2, int y2) {
-        // garante que (0,0)-(0,1) e (0,1)-(0,0) resultam na mesma chave "0,0-0,1"
-        int startX = Math.min(x1, x2);
-        int startY = Math.min(y1, y2);
-        int endX = Math.max(x1, x2);
-        int endY = Math.max(y1, y2);
-        return startX + "," + startY + "-" + endX + "," + endY;
+        // a normalização da linha é feita no construtor
+        Line temp = new Line(new Dot(x1, y1), new Dot(x2, y2));
+        return temp.getDot1() + "-" + temp.getDot2();
     }
 
     public String getBoxOwner(int row, int col) {
