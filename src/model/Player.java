@@ -84,11 +84,17 @@ public class Player {
         this.totalLosses = totalLosses;
     }
 
+    // depois para adicionar o average time deve bastar meter dois metodos
+    // na classe do GameRoom
     public void setAverageTimePerMatch(long averageTimePerMatch) {
         this.averageTimePerMatch = averageTimePerMatch;
     }
 
     // utils
+
+    public int getTotalGamesPlayed() {
+        return this.totalWins + this.totalLosses;
+    }
 
     /**
      * Incrementa o registo de vitórias.

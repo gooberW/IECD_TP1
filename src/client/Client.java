@@ -49,6 +49,7 @@ public class Client {
                 while (in.hasNextLine()) {
                     String response = in.nextLine();
                     processServerMessage(response);
+                    System.out.print("> ");
 
                 }
                 System.out.println("\n[CLIENT] Ligação perdida com o servidor.");
@@ -111,6 +112,11 @@ public class Client {
                     action.setAttribute("y1", parts[2]);
                     action.setAttribute("x2", parts[3]);
                     action.setAttribute("y2", parts[4]);
+                    break;
+                case "stats":
+                    //TODO - mostrar menu de estatisticas
+                    // neste menu, quando se puxar o avg time por jogo
+                    // utilizar a função getGameTimeFormatted()
                     break;
                 default: return null;
             }
@@ -219,7 +225,6 @@ public class Client {
         System.out.println(" (y)");
 
         for (int i = 0; i < currentGridSize; i++) {
-            // Desenha o número da linha e o identificador do eixo Y apenas na linha do meio
             if (i == currentGridSize / 2) {
                 System.out.print("(x) " + i + " ");
             } else {
@@ -274,5 +279,13 @@ public class Client {
                     Integer.parseInt(points[1].split(",")[0]), Integer.parseInt(points[1].split(",")[1])
             );
         } catch (Exception e) { return key; }
+    }
+
+    private static String getGameTimeFormatted(long millis) {
+        long minutes = millis / 60000;
+        long seconds = (millis % 60000) / 1000;
+        long remainingMillis = millis % 1000;
+
+        return String.format("%02d:%02d.%03d", minutes, seconds, remainingMillis);
     }
 }

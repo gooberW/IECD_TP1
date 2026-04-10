@@ -20,6 +20,9 @@ public class GameRoom {
     private ClientHandler currentTurn;
     private String lastMoveCoords = "";
 
+    // para os tempos
+    private long matchStartTime;
+
     public GameRoom(ClientHandler p1, ClientHandler p2, int gridSize) {
         this.player1 = p1;
         this.player2 = p2;
@@ -56,6 +59,9 @@ public class GameRoom {
         match2.setAttribute("size", String.valueOf(board.getGridSize()));
         doc2.getDocumentElement().appendChild(match2);
         player2.sendValidatedXML(doc2);
+
+        // o tempo começa no inicio da partida
+        matchStartTime = System.currentTimeMillis();
 
         broadcastGameState();
     }
@@ -133,6 +139,10 @@ public class GameRoom {
         int p1Score = board.getScore(player1.getPlayer());
         int p2Score = board.getScore(player2.getPlayer());
 
+        long matchDuration = System.currentTimeMillis() - matchStartTime;
+        updateMatchTime(playerModel1, matchDuration);
+        updateMatchTime(playerModel2, matchDuration);
+
         String result;
         Player winner = null;
         Player loser = null;
@@ -191,12 +201,29 @@ public class GameRoom {
             if (loser  != null) loser.addLoss();
             List<Player> all = PlayerDB.load();
             for (Player p : all) {
-                if (winner != null && p.getNickname().equals(winner.getNickname()))
+                if (winner != null && p.getNickname().equals(winner.getNickname())) {
                     p.setTotalWins(winner.getTotalWins());
-                if (loser != null && p.getNickname().equals(loser.getNickname()))
+                    p.setAverageTimePerMatch(winner.getAverageTimePerMatch());
+                }
+                if (loser != null && p.getNickname().equals(loser.getNickname())) {
                     p.setTotalLosses(loser.getTotalLosses());
+                    p.setAverageTimePerMatch(loser.getAverageTimePerMatch());
+                }
             }
             PlayerDB.save(all);
         }
+    }
+
+    private void updateMatchTime(Player player, long duration) {
+        int totalGames = player.getTotalGamesPlayed();
+
+        long newAvg;
+        if(totalGames == 0) {
+            newAvg = duration;
+        } else {
+            newAvg = (player.getAverageTimePerMatch() * totalGames + duration) / (totalGames + 1);
+        }
+
+        player.setAverageTimePerMatch(newAvg);
     }
 }
