@@ -80,6 +80,32 @@
                     </xs:complexType>
                 </xs:element>
 
+                <xs:element name="change_photo">
+                    <xs:complexType>
+                        <xs:attribute name="photo" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                
+                <xs:element name="stats">
+                    <xs:complexType>
+                        <xs:attribute name="nickname" type="xs:string"/>
+                        <xs:attribute name="wins" type="xs:integer"/>
+                        <xs:attribute name="losses" type="xs:integer"/>
+                        <xs:attribute name="totalGames" type="xs:integer"/>
+                        <xs:attribute name="avgTime" type="xs:long"/>
+                    </xs:complexType>
+                </xs:element>
+                
+                <xs:element name="gameEnd">
+                    <xs:complexType>
+                        <xs:attribute name="status" type="xs:string"/>
+                        <xs:attribute name="winner" type="xs:boolean"/>
+                        <xs:attribute name="yourScore" type="xs:string"/>
+                        <xs:attribute name="opponentScore" type="xs:string"/>
+                        <xs:attribute name="opponent" type="xs:string"/>
+                    </xs:complexType>
+                </xs:element>
+
             </xs:choice>
         </xs:complexType>
     </xs:element>
