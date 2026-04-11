@@ -184,7 +184,7 @@ public class Client {
                 String opponentScore = el.getAttribute("opponentScore");
                 String opponent = el.getAttribute("opponent");
 
-                String resultado = isWinner ? " VITÓRIA! " : (yourScore.equals(opponentScore) ? " EMPATE " : " DERROTA ")
+                String resultado = isWinner ? " VITÓRIA! " : (yourScore.equals(opponentScore) ? " EMPATE " : " DERROTA ");
                 
                 System.out.println("\n=== " + resultado + " ===");
                 System.out.println("Oponente: " + opponent);
