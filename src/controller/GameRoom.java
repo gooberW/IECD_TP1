@@ -238,14 +238,14 @@ public class GameRoom {
 
     // Notificar ao jogador que o jogo terminou, e assim referir quem venceu e a pontuação do jogador e seu oponente
     private void notifyGameEndToPlayer(ClientHandler player, boolean isWinner, int playerScore, int opponentScore, String opponentName) {
-    Document doc = createBaseDocument();
-    Element gameEnd = doc.createElement("gameEnd");
-    gameEnd.setAttribute("status", "finished");
-    gameEnd.setAttribute("winner", String.valueOf(isWinner));
-    gameEnd.setAttribute("yourScore", String.valueOf(playerScore));
-    gameEnd.setAttribute("opponentScore", String.valueOf(opponentScore));
-    gameEnd.setAttribute("opponent", opponentName);
-    doc.getDocumentElement().appendChild(gameEnd);
-    player.sendValidatedXML(doc);
-}
+        Document doc = createBaseDocument();
+        Element gameEnd = doc.createElement("gameEnd");
+        gameEnd.setAttribute("status", "finished");
+        gameEnd.setAttribute("winner", String.valueOf(isWinner));
+        gameEnd.setAttribute("yourScore", String.valueOf(playerScore));
+        gameEnd.setAttribute("opponentScore", String.valueOf(opponentScore));
+        gameEnd.setAttribute("opponent", opponentName);
+        doc.getDocumentElement().appendChild(gameEnd);
+        player.sendValidatedXML(doc);
+    }
 }
