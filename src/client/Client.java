@@ -259,8 +259,15 @@ public class Client {
     }
 
     private static void showMenu() {
-        System.out.println("\nComandos: \nlogin <nickname> <password>" +
-                "\nregister <nickname> <password> <age> <nat> <photo> \nplay <tamanho> (ex: play 3 para 3x3 pontos, play 5 para 5x5)\"); \nsair");
+        System.out.println("\n===== MENU DOTS & BOXES =====");
+        System.out.println("Comandos:");
+        System.out.println("  login <nickname> <password>");
+        System.out.println("  register <nickname> <password> <age> <nat> <photo>");
+        System.out.println("  play <tamanho> (ex: play 3)");
+        System.out.println("  stats");
+        System.out.println("  change_photo <base64_photo>");
+        System.out.println("  sair");
+        System.out.println("==============================");
     }
 
     private static void drawBoard() {
