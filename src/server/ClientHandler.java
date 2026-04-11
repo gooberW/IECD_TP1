@@ -90,6 +90,7 @@ public class ClientHandler extends Thread {
                 case "play" -> handlePlay(commandElement);
                 case "move" -> handleMove(commandElement);
                 case "stats" -> handleStats(commandElement);
+                case "change_photo" -> handleChangePhoto(commandElement);
                 default -> sendErrorResponse("[ERRO] Comando desconhecido");
             }
         } catch (Exception e) {
@@ -226,6 +227,36 @@ public class ClientHandler extends Thread {
         stats.setAttribute("totalGames", String.valueOf(authPlayer.getTotalGamesPlayed()));
         stats.setAttribute("avgTime", String.valueOf(authPlayer.getAverageTimePerMatch()));
         doc.getDocumentElement().appendChild(stats);
+        sendValidatedXML(doc);
+    }
+
+    private void handleChangePhoto(Element el) {
+        if (authPlayer == null) {
+            sendErrorResponse("Faz login primeiro!");
+            return;
+        }
+        String newPhoto = el.getAttribute("photo");
+        if (newPhoto == null || newPhoto.trim().isEmpty()) {
+            sendErrorResponse("Foto inválida!");
+            return;
+        }
+        
+        // Atualizar na lista de jogadores
+        List<Player> players = PlayerDB.load();
+        for (Player p : players) {
+            if (p.getNickname().equals(authPlayer.getNickname())) {
+                p.setProfilePicture(newPhoto);
+                this.authPlayer.setProfilePicture(newPhoto);
+                break;
+            }
+        }
+        PlayerDB.save(players);
+        
+        Document doc = createBaseDocument();
+        Element resp = doc.createElement("response");
+        resp.setAttribute("status", "success");
+        resp.setAttribute("msg", "Foto de perfil atualizada com sucesso!");
+        doc.getDocumentElement().appendChild(resp);
         sendValidatedXML(doc);
     }
 
