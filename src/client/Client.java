@@ -179,16 +179,24 @@ public class Client {
                 }
             }
             else if (tagName.equals("gameEnd")) {
-                    boolean isWinner = Boolean.parseBoolean(el.getAttribute("winner"));
-                String yourScore = el.getAttribute("yourScore");
+                String winnerNick = el.getAttribute("winner");
+                String myScore = el.getAttribute("myScore");
                 String opponentScore = el.getAttribute("opponentScore");
                 String opponent = el.getAttribute("opponent");
 
-                String resultado = isWinner ? " VITÓRIA! " : (yourScore.equals(opponentScore) ? " EMPATE " : " DERROTA ");
+                String resultado;
+
+                if(winnerNick.equals(myNickname)) {
+                    resultado = "VITÓRIA";
+                } else if (myScore.equals(opponentScore)) {
+                    resultado = "EMPATE";
+                } else {
+                    resultado = "DERROTA";
+                }
                 
                 System.out.println("\n=== " + resultado + " ===");
                 System.out.println("Oponente: " + opponent);
-                System.out.println("Pontuação: " + yourScore);
+                System.out.println("Pontuação: " + myScore);
                 System.out.println("Pontuação do adversário: " + opponentScore);
                 System.out.println("\nPressiona [ENTER] para voltar ao menu principal...");
                 

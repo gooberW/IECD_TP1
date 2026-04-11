@@ -103,7 +103,7 @@
                     <xs:complexType>
                         <xs:attribute name="status" type="xs:string"/>
                         <xs:attribute name="winner" type="xs:string"/>
-                        <xs:attribute name="yourScore" type="xs:string"/>
+                        <xs:attribute name="myScore" type="xs:string"/>
                         <xs:attribute name="opponentScore" type="xs:string"/>
                         <xs:attribute name="opponent" type="xs:string"/>
                     </xs:complexType>

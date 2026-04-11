@@ -226,7 +226,7 @@ public class GameRoom {
         Element gameEnd = doc.createElement("gameEnd");
         gameEnd.setAttribute("status", "finished");
         gameEnd.setAttribute("winner", winner.getNickname());
-        gameEnd.setAttribute("yourScore", String.valueOf(playerScore));
+        gameEnd.setAttribute("myScore", String.valueOf(playerScore));
         gameEnd.setAttribute("opponentScore", String.valueOf(opponentScore));
         gameEnd.setAttribute("opponent", opponentName);
         doc.getDocumentElement().appendChild(gameEnd);
