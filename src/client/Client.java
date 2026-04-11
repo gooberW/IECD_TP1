@@ -193,7 +193,7 @@ public class Client {
                 System.out.println("\nPressiona [ENTER] para voltar ao menu principal...");
                 
                 // Aguardar ENTER
-                new Scanner(System.in).nextLine();
+                new Scanner(System.in).nextLine(); // aqui vai dar erro de comando invalido (TODO)
                 showMenu();
                 myNickname = "";
                 occupiedLines.clear();
