@@ -89,6 +89,7 @@ public class ClientHandler extends Thread {
                 case "register" -> handleRegister(commandElement);
                 case "play" -> handlePlay(commandElement);
                 case "move" -> handleMove(commandElement);
+                case "stats" -> handleStats(commandElement);
                 default -> sendErrorResponse("[ERRO] Comando desconhecido");
             }
         } catch (Exception e) {
@@ -210,6 +211,22 @@ public class ClientHandler extends Thread {
         } catch (NumberFormatException e) {
             sendErrorResponse("[ERRO] Coordenadas invalidas");
         }
+    }
+
+    private void handleStats(Element el) {
+        if (authPlayer == null) {
+            sendErrorResponse("Faz login primeiro!");
+            return;
+        }
+        Document doc = createBaseDocument();
+        Element stats = doc.createElement("stats");
+        stats.setAttribute("nickname", authPlayer.getNickname());
+        stats.setAttribute("wins", String.valueOf(authPlayer.getTotalWins()));
+        stats.setAttribute("losses", String.valueOf(authPlayer.getTotalLosses()));
+        stats.setAttribute("totalGames", String.valueOf(authPlayer.getTotalGamesPlayed()));
+        stats.setAttribute("avgTime", String.valueOf(authPlayer.getAverageTimePerMatch()));
+        doc.getDocumentElement().appendChild(stats);
+        sendValidatedXML(doc);
     }
 
     private Document createBaseDocument() {
