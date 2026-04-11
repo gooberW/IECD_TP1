@@ -119,7 +119,7 @@ public class ClientHandler extends Thread {
             resp.setAttribute("status", "success");
             resp.setAttribute("nickname", nick);
             resp.setAttribute("wins", String.valueOf(foundPlayer.getTotalWins()));
-            resp.setAttribute("msg", "[D&B] Login efetuado com sucesso");
+            resp.setAttribute("msg", "[D&B] Login feito com sucesso");
         } else {
             resp.setAttribute("status", "fail");
             resp.setAttribute("msg", "[ERRO] Credenciais incorretas");

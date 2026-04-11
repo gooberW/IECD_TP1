@@ -173,14 +173,11 @@ public class Client {
 
                 drawBoard();
                 System.out.println("Pontuação: " + el.getAttribute("scores"));
-                System.out.println("Próximo: " + el.getAttribute("next"));
+                //System.out.println("Próximo: " + el.getAttribute("next"));
                 if (el.getAttribute("next").equalsIgnoreCase(myNickname)) {
                     System.out.println(">>> É A TUA VEZ! <<<");
                     System.out.println("> move <x1> <y1> <x2> <y2>");
                 }
-            }
-            else if (tagName.equals("gameOver")) {
-                System.out.println("\n=== FIM DO JOGO ===\n" + el.getAttribute("msg"));
             }
             else if (tagName.equals("gameEnd")) {
                     boolean isWinner = Boolean.parseBoolean(el.getAttribute("winner"));
@@ -190,10 +187,10 @@ public class Client {
                 
                 System.out.println("\n=== RESUMO DA PARTIDA ===");
                 System.out.println("Oponente: " + opponent);
-                System.out.println("Teu placar: " + yourScore);
-                System.out.println("Placar adversário: " + opponentScore);
+                System.out.println("Pontuação: " + yourScore);
+                System.out.println("Pontuação do adversário: " + opponentScore);
                 System.out.println(isWinner ? " VITÓRIA! " : (yourScore.equals(opponentScore) ? " EMPATE " : " DERROTA "));
-                System.out.println("\nPressione ENTER para voltar ao menu principal...");
+                System.out.println("\nPressiona [ENTER] para voltar ao menu principal...");
                 
                 // Aguardar ENTER
                 new Scanner(System.in).nextLine();

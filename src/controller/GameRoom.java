@@ -143,36 +143,20 @@ public class GameRoom {
         updateMatchTime(playerModel1, matchDuration);
         updateMatchTime(playerModel2, matchDuration);
 
-        String result;
         Player winner = null;
         Player loser = null;
-        boolean p1Won = false, p2Won = false;
 
         if (p1Score > p2Score) {
-            result = "Vencedor: " + player1.getNickname();
             winner = playerModel1; loser = playerModel2;
         } else if (p2Score > p1Score) {
-            result = "Vencedor: " + player2.getNickname();
             winner = playerModel2; loser = playerModel1;
-        } else {
-            result = "Empate!";
         }
 
         updatePlayerStats(winner, loser);
 
-        Document doc = createBaseDocument();
-        Element gameOver = doc.createElement("gameOver");
-        gameOver.setAttribute("msg", result);
-        doc.getDocumentElement().appendChild(gameOver);
+        notifyGameEndToPlayer(player1, winner, p1Score, p2Score, player2.getNickname());
+        notifyGameEndToPlayer(player2, winner, p2Score, p1Score, player1.getNickname());
 
-        player1.sendValidatedXML(doc);
-        player2.sendValidatedXML(doc);
-
-        // Notificações individuais com dados específicos de cada jogo- jogador, oponente, pontuação de cada um e quem venceu.
-        notifyGameEndToPlayer(player1, p1Won, p1Score, p2Score, player2.getNickname());
-        notifyGameEndToPlayer(player2, p2Won, p2Score, p1Score, player1.getNickname());
-        
-        // Limpar referências, terminando assim a sessão de jogo para o jogador e oponente atuais.
         player1.setGameSession(null);
         player2.setGameSession(null);
     }
@@ -237,11 +221,11 @@ public class GameRoom {
     }
 
     // Notificar ao jogador que o jogo terminou, e assim referir quem venceu e a pontuação do jogador e seu oponente
-    private void notifyGameEndToPlayer(ClientHandler player, boolean isWinner, int playerScore, int opponentScore, String opponentName) {
+    private void notifyGameEndToPlayer(ClientHandler player, Player winner, int playerScore, int opponentScore, String opponentName) {
         Document doc = createBaseDocument();
         Element gameEnd = doc.createElement("gameEnd");
         gameEnd.setAttribute("status", "finished");
-        gameEnd.setAttribute("winner", String.valueOf(isWinner));
+        gameEnd.setAttribute("winner", winner.getNickname());
         gameEnd.setAttribute("yourScore", String.valueOf(playerScore));
         gameEnd.setAttribute("opponentScore", String.valueOf(opponentScore));
         gameEnd.setAttribute("opponent", opponentName);
