@@ -117,6 +117,7 @@ public class Client {
                     //TODO - mostrar menu de estatisticas
                     // neste menu, quando se puxar o avg time por jogo
                     // utilizar a função getGameTimeFormatted()
+                    action.setAttribute("type", parts.length > 1 ? parts[1] : "all");
                     break;
                 default: return null;
             }
@@ -178,12 +179,55 @@ public class Client {
             else if (tagName.equals("gameOver")) {
                 System.out.println("\n=== FIM DO JOGO ===\n" + el.getAttribute("msg"));
             }
+            else if (tagName.equals("gameEnd")) {
+                    boolean isWinner = Boolean.parseBoolean(el.getAttribute("winner"));
+                String yourScore = el.getAttribute("yourScore");
+                String opponentScore = el.getAttribute("opponentScore");
+                String opponent = el.getAttribute("opponent");
+                
+                System.out.println("\n=== RESUMO DA PARTIDA ===");
+                System.out.println("Oponente: " + opponent);
+                System.out.println("Teu placar: " + yourScore);
+                System.out.println("Placar adversário: " + opponentScore);
+                System.out.println(isWinner ? " VITÓRIA! " : (yourScore.equals(opponentScore) ? " EMPATE " : " DERROTA "));
+                System.out.println("\nPressione ENTER para voltar ao menu principal...");
+                
+                // Aguardar ENTER
+                new Scanner(System.in).nextLine();
+                showMenu();
+                myNickname = ""; // Reset do estado
+                occupiedLines.clear();
+                conqueredBoxes.clear();
+            }
+            else if (tagName.equals("stats")) {
+                displayStats(xml);
+            }
 
         } catch (Exception e) {
             System.err.println("Erro ao processar mensagem do servidor.");
         }
         System.out.flush(); // é preciso para aparecerem mensagens no powersehll / cmd
     }
+
+
+    private static void displayStats(String statsXml) {
+        try {
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder() .parse(new ByteArrayInputStream(statsXml.getBytes()));
+            Element root = doc.getDocumentElement();
+            Element stats = (Element) getFirstElementChild(root);
+            
+            System.out.println("\n========== ESTATÍSTICAS ==========");
+            System.out.println("Jogador: " + stats.getAttribute("nickname"));
+            System.out.println("Vitórias: " + stats.getAttribute("wins"));
+            System.out.println("Derrotas: " + stats.getAttribute("losses"));
+            System.out.println("Total de jogos: " + stats.getAttribute("totalGames"));
+            System.out.println("Tempo médio por jogo: " + getGameTimeFormatted(Long.parseLong(stats.getAttribute("avgTime"))));
+            System.out.println("===================================");
+        } catch (Exception e) {
+            System.err.println("Erro ao mostrar estatísticas");
+        }
+    }
+    
 
     /**
      * Retorna o primeiro elemento filho de um determinado nó.
