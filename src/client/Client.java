@@ -119,6 +119,9 @@ public class Client {
                     // utilizar a função getGameTimeFormatted()
                     action.setAttribute("type", parts.length > 1 ? parts[1] : "all");
                     break;
+                case "change_photo":
+                    action.setAttribute("photo", parts[1]);
+                    break;
                 default: return null;
             }
 
