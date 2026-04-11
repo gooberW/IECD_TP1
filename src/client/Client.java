@@ -117,7 +117,6 @@ public class Client {
                     //TODO - mostrar menu de estatisticas
                     // neste menu, quando se puxar o avg time por jogo
                     // utilizar a função getGameTimeFormatted()
-                    action.setAttribute("type", parts.length > 1 ? parts[1] : "all");
                     break;
                 case "change_photo":
                     action.setAttribute("photo", parts[1]);
@@ -184,18 +183,19 @@ public class Client {
                 String yourScore = el.getAttribute("yourScore");
                 String opponentScore = el.getAttribute("opponentScore");
                 String opponent = el.getAttribute("opponent");
+
+                String resultado = isWinner ? " VITÓRIA! " : (yourScore.equals(opponentScore) ? " EMPATE " : " DERROTA ")
                 
-                System.out.println("\n=== RESUMO DA PARTIDA ===");
+                System.out.println("\n=== " + resultado + " ===");
                 System.out.println("Oponente: " + opponent);
                 System.out.println("Pontuação: " + yourScore);
                 System.out.println("Pontuação do adversário: " + opponentScore);
-                System.out.println(isWinner ? " VITÓRIA! " : (yourScore.equals(opponentScore) ? " EMPATE " : " DERROTA "));
                 System.out.println("\nPressiona [ENTER] para voltar ao menu principal...");
                 
                 // Aguardar ENTER
                 new Scanner(System.in).nextLine();
                 showMenu();
-                myNickname = ""; // Reset do estado
+                myNickname = "";
                 occupiedLines.clear();
                 conqueredBoxes.clear();
             }

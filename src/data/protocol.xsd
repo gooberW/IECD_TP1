@@ -86,7 +86,7 @@
                     </xs:complexType>
                 </xs:element>
                 
-                <xs:element name="stats">
+                <xs:element name="sendStats">
                     <xs:complexType>
                         <xs:attribute name="nickname" type="xs:string"/>
                         <xs:attribute name="wins" type="xs:integer"/>
@@ -95,11 +95,14 @@
                         <xs:attribute name="avgTime" type="xs:long"/>
                     </xs:complexType>
                 </xs:element>
+
+                <xs:element name="stats">
+                </xs:element>
                 
                 <xs:element name="gameEnd">
                     <xs:complexType>
                         <xs:attribute name="status" type="xs:string"/>
-                        <xs:attribute name="winner" type="xs:boolean"/>
+                        <xs:attribute name="winner" type="xs:string"/>
                         <xs:attribute name="yourScore" type="xs:string"/>
                         <xs:attribute name="opponentScore" type="xs:string"/>
                         <xs:attribute name="opponent" type="xs:string"/>

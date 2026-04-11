@@ -6,9 +6,9 @@
         <age>20</age>
         <nationality>PT</nationality>
         <photo>2</photo>
-        <wins>3</wins>
+        <wins>4</wins>
         <losses>1</losses>
-        <avgTime>0</avgTime>
+        <avgTime>5265</avgTime>
     </player>
     <player>
         <nickname>ola</nickname>
@@ -27,8 +27,8 @@
         <nationality>PT</nationality>
         <photo>photo</photo>
         <wins>3</wins>
-        <losses>0</losses>
-        <avgTime>21540</avgTime>
+        <losses>1</losses>
+        <avgTime>22545</avgTime>
     </player>
     <player>
         <nickname>b</nickname>
@@ -36,8 +36,8 @@
         <age>10</age>
         <nationality>PT</nationality>
         <photo>photo</photo>
-        <wins>0</wins>
-        <losses>3</losses>
-        <avgTime>21540</avgTime>
+        <wins>1</wins>
+        <losses>4</losses>
+        <avgTime>23301</avgTime>
     </player>
 </players>
