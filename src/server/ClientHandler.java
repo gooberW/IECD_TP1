@@ -30,6 +30,8 @@ public class ClientHandler extends Thread {
     private PrintWriter out; // para onde vai escrever o XML
     private GameRoom currentGame;
 
+    private boolean inGame = false;
+    
     private Player authPlayer = null;
 
     private static final String XSD_PATH = "src/data/protocol.xsd";
@@ -162,6 +164,10 @@ public class ClientHandler extends Thread {
 
     private void handlePlay(Element el) {
         if (authPlayer != null) {
+            if (inGame) {
+                sendErrorResponse("Já estás numa partida ativa! Termina o jogo atual primeiro.");
+                return;
+            }
             int size = 3; // default
             if (el.hasAttribute("size")) {
                 size = Integer.parseInt(el.getAttribute("size"));
@@ -330,7 +336,10 @@ public class ClientHandler extends Thread {
         return null;
     }
 
-    public void setGameSession(GameRoom room) { this.currentGame = room; }
+    public void setGameSession(GameRoom room) { 
+        this.currentGame = room;
+        this.inGame = (room != null);
+    }
 
     private void cleanup() {
         System.out.println("[HANDLER] Conexão encerrada: " + getNickname());
