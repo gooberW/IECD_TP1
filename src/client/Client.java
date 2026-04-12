@@ -129,9 +129,6 @@ public class Client {
                     action.setAttribute("y2", parts[4]);
                     break;
                 case "stats":
-                    //TODO - mostrar menu de estatisticas
-                    // neste menu, quando se puxar o avg time por jogo
-                    // utilizar a função getGameTimeFormatted()
                     action.setAttribute("type", "request");
                     break;
                 case "change_photo":

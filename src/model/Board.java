@@ -7,6 +7,8 @@ public class Board {
     private final Map<String, Line> lines = new HashMap<>();
     private final List<Box> boxes = new ArrayList<>();
 
+    public enum MoveResult { INVALID, CLOSED_BOX, NO_BOX_CLOSED }
+
     public Board(int gridSize) {
         this.gridSize = gridSize;
         generateGraph();
@@ -31,24 +33,18 @@ public class Board {
         }
     }
 
-    public boolean makeMove(Line line, Player player) {
-        //a linha recebida vem do xml, por isso temos de procurar a linha "real" correspondente
-        // que esta na lista
+    public MoveResult makeMove(Line line, Player player) {
         Line realLine = getLine(line.getDot1().getX(), line.getDot1().getY(),
-                                line.getDot2().getX(), line.getDot2().getY());  // vai buscar a lista
+                line.getDot2().getX(), line.getDot2().getY());
 
-        if (realLine == null || realLine.isOccupied()) return false;
+        if (realLine == null || realLine.isOccupied()) return MoveResult.INVALID;
 
         realLine.setOccupied(true);
-        boolean closedAnyBox = false;
 
         for (Box box : boxes) {
-            // checkCompleted deve retornar true apenas se a caixa ACABOU de ser fechada
-            if (box.checkCompleted(player)) {
-                closedAnyBox = true;
-            }
+            if (box.checkCompleted(player)) return MoveResult.CLOSED_BOX;
         }
-        return closedAnyBox;
+        return MoveResult.NO_BOX_CLOSED;
     }
 
     public boolean isGameOver() {

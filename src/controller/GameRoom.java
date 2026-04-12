@@ -77,17 +77,14 @@ public class GameRoom {
             return;
         }
 
-        if (line.isOccupied()) {
-            sendError(sender, "Essa linha já foi traçada! Escolhe outra.");
-            return; // retorna sem mudar o currentTurn, assim o jogador tenta outra vez
-        }
-
         try {
-            boolean closedBox = board.makeMove(line, sender.getPlayer());
+            Board.MoveResult result = board.makeMove(line, sender.getPlayer());
             this.lastMoveCoords = line.toString();
 
-            if (!closedBox) {
-                currentTurn = (currentTurn == player1) ? player2 : player1;
+            switch (result) {
+                case INVALID -> { sendError(sender, "[!] Linha ocupada. Tenta outra."); }
+                case CLOSED_BOX -> { /* jogador joga outra vez */ }
+                case NO_BOX_CLOSED -> currentTurn = (currentTurn == player1) ? player2 : player1;
             }
 
             broadcastGameState();
