@@ -29,6 +29,8 @@ public class Client {
     private static boolean running = true;
     private static String myNickname = "";
 
+    private static boolean waitingForMenuCommand = false;
+
     // usa-se um HashSet para armazenar as linhas traçadas porque
     // esta estrutura não permite duplicados e é muito rapida
     private static Set<String> occupiedLines = new HashSet<>();
@@ -59,15 +61,28 @@ public class Client {
 
             showMenu();
             while (running) {
-                System.out.print("> ");
-                String input = keyboard.nextLine().trim();
-                if (input.equalsIgnoreCase("sair")) break;
-
-                String xml = parseInputToXML(input);
-                if (xml != null) {
-                    out.println(xml);
+                if (waitingForMenuCommand) {
+                    String input = keyboard.nextLine().trim();
+                    if (input.equalsIgnoreCase("menu")) {
+                        waitingForMenuCommand = false;
+                        showMenu();
+                        myNickname = "";
+                        occupiedLines.clear();
+                        conqueredBoxes.clear();
+                    } else {
+                        System.out.println("Digite 'menu' para voltar ao menu principal");
+                    }
                 } else {
-                    System.out.println("[CLIENT] Comando inválido ou erro ao gerar XML.");
+                    System.out.print("> ");
+                    String input = keyboard.nextLine().trim();
+                    if (input.equalsIgnoreCase("sair")) break;
+                    
+                    String xml = parseInputToXML(input);
+                    if (xml != null) {
+                        out.println(xml);
+                    } else {
+                        System.out.println("[CLIENT] Comando inválido ou erro ao gerar XML.");
+                    }
                 }
             }
 
@@ -179,33 +194,21 @@ public class Client {
                 }
             }
             else if (tagName.equals("gameEnd")) {
-                String winnerNick = el.getAttribute("winner");
-                String myScore = el.getAttribute("myScore");
+                boolean isWinner = Boolean.parseBoolean(el.getAttribute("winner"));
+                String yourScore = el.getAttribute("myScore");
                 String opponentScore = el.getAttribute("opponentScore");
                 String opponent = el.getAttribute("opponent");
 
-                String resultado;
-
-                if(winnerNick.equals(myNickname)) {
-                    resultado = "VITÓRIA";
-                } else if (myScore.equals(opponentScore)) {
-                    resultado = "EMPATE";
-                } else {
-                    resultado = "DERROTA";
-                }
-                
-                System.out.println("\n=== " + resultado + " ===");
+                System.out.println("\n=== RESUMO DA PARTIDA ===");
                 System.out.println("Oponente: " + opponent);
-                System.out.println("Pontuação: " + myScore);
-                System.out.println("Pontuação do adversário: " + opponentScore);
-                System.out.println("\nPressiona [ENTER] para voltar ao menu principal...");
-                
-                // Aguardar ENTER
-                new Scanner(System.in).nextLine(); // aqui vai dar erro de comando invalido (TODO)
-                showMenu();
-                myNickname = "";
-                occupiedLines.clear();
-                conqueredBoxes.clear();
+                System.out.println("Teu placar: " + yourScore);
+                System.out.println("Placar adversário: " + opponentScore);
+                System.out.println(isWinner ? " VITÓRIA! " : (yourScore.equals(opponentScore) ? " EMPATE " : " DERROTA "));
+                System.out.println("\nDigite 'menu' para voltar ao menu principal...");
+
+                // Mudar o estado para aguardar comando específico
+                waitingForMenuCommand = true;
+      
             }
             else if (tagName.equals("stats")) {
                 displayStats(xml);
