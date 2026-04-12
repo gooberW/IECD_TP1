@@ -226,7 +226,8 @@ public class ClientHandler extends Thread {
             return;
         }
         Document doc = createBaseDocument();
-        Element stats = doc.createElement("sendStats");
+        Element stats = doc.createElement("stats");
+        stats.setAttribute("type", "response");
         stats.setAttribute("nickname", authPlayer.getNickname());
         stats.setAttribute("wins", String.valueOf(authPlayer.getTotalWins()));
         stats.setAttribute("losses", String.valueOf(authPlayer.getTotalLosses()));

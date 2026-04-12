@@ -85,18 +85,23 @@
                         <xs:attribute name="photo" type="xs:string" use="required"/>
                     </xs:complexType>
                 </xs:element>
-                
-                <xs:element name="sendStats">
+
+                <xs:element name="stats">
                     <xs:complexType>
+                        <xs:attribute name="type" use="required">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="request"/>
+                                    <xs:enumeration value="response"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:attribute>
                         <xs:attribute name="nickname" type="xs:string"/>
                         <xs:attribute name="wins" type="xs:integer"/>
                         <xs:attribute name="losses" type="xs:integer"/>
                         <xs:attribute name="totalGames" type="xs:integer"/>
                         <xs:attribute name="avgTime" type="xs:long"/>
                     </xs:complexType>
-                </xs:element>
-
-                <xs:element name="stats">
                 </xs:element>
                 
                 <xs:element name="gameEnd">

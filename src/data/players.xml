@@ -40,4 +40,14 @@
         <losses>4</losses>
         <avgTime>27475</avgTime>
     </player>
+    <player>
+        <nickname>c</nickname>
+        <password>c</password>
+        <age>45</age>
+        <nationality>PT</nationality>
+        <photo>photo_new</photo>
+        <wins>0</wins>
+        <losses>0</losses>
+        <avgTime>0</avgTime>
+    </player>
 </players>
