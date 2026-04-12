@@ -79,7 +79,6 @@ public class GameRoom {
 
         try {
             Board.MoveResult result = board.makeMove(line, sender.getPlayer());
-            this.lastMoveCoords = line.toString();
 
             switch (result) {
                 case INVALID -> { sendError(sender, "[!] Linha ocupada. Tenta outra."); }
@@ -87,6 +86,7 @@ public class GameRoom {
                 case NO_BOX_CLOSED -> currentTurn = (currentTurn == player1) ? player2 : player1;
             }
 
+            this.lastMoveCoords = line.toString();
             broadcastGameState();
 
             if (board.isGameOver()) {
