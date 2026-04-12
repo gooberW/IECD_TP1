@@ -101,6 +101,22 @@ public class ClientHandler extends Thread {
         }
     }
 
+
+    private void handleBackToMenu() {
+        if (authPlayer != null && currentGame != null) {
+            // Se ainda estiver num jogo, notifica que está a sair
+            System.out.println("[HANDLER] " + authPlayer.getNickname() + " voltou ao menu");
+        }
+        
+        // Resposta simples de confirmação
+        Document doc = createBaseDocument();
+        Element resp = doc.createElement("response");
+        resp.setAttribute("status", "success");
+        resp.setAttribute("msg", "Voltou ao menu principal");
+        doc.getDocumentElement().appendChild(resp);
+        sendValidatedXML(doc);
+    }
+
     /**
      * Vai buscar os elementos precisos para o login
      * @param el
