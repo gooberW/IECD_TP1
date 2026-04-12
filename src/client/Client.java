@@ -62,17 +62,28 @@ public class Client {
             showMenu();
             while (running) {
                 if (waitingForMenuCommand) {
-                    String input = keyboard.nextLine().trim();
-                    if (input.equalsIgnoreCase("menu")) {
-                        waitingForMenuCommand = false;
-                        showMenu();
-                        myNickname = "";
-                        occupiedLines.clear();
-                        conqueredBoxes.clear();
-                    } else {
-                        System.out.println("Digite 'menu' para voltar ao menu principal");
-                    }
-                } else {
+            	    String input = keyboard.nextLine().trim();
+            	    if (input.equalsIgnoreCase("menu")) {
+            	        // Envia comando back_to_menu para o servidor
+            	        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            	        Element root = doc.createElement("protocol");
+            	        doc.appendChild(root);
+            	        Element back = doc.createElement("back_to_menu");
+            	        root.appendChild(back);
+            	        String xml = XMLMessageBuilder.toString(doc);
+            	        if (xml != null) {
+            	            out.println(xml);
+            	        }
+            	        
+            	        waitingForMenuCommand = false;
+            	        showMenu();
+            	        myNickname = "";
+            	        occupiedLines.clear();
+            	        conqueredBoxes.clear();
+            	    } else {
+            	        System.out.println("Digite 'menu' para voltar ao menu principal");
+            	    }
+                }      else {
                     System.out.print("> ");
                     String input = keyboard.nextLine().trim();
                     if (input.equalsIgnoreCase("sair")) break;
