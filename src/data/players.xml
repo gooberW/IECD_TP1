@@ -27,8 +27,8 @@
         <nationality>PT</nationality>
         <photo>photo</photo>
         <wins>3</wins>
-        <losses>2</losses>
-        <avgTime>27147</avgTime>
+        <losses>3</losses>
+        <avgTime>27666</avgTime>
     </player>
     <player>
         <nickname>b</nickname>
@@ -36,8 +36,8 @@
         <age>10</age>
         <nationality>PT</nationality>
         <photo>photo</photo>
-        <wins>2</wins>
+        <wins>3</wins>
         <losses>4</losses>
-        <avgTime>27010</avgTime>
+        <avgTime>27475</avgTime>
     </player>
 </players>

@@ -194,19 +194,26 @@ public class Client {
                 }
             }
             else if (tagName.equals("gameEnd")) {
-                boolean isWinner = Boolean.parseBoolean(el.getAttribute("winner"));
-                String yourScore = el.getAttribute("myScore");
+                String winnerNick = el.getAttribute("winner");
+                String myScore = el.getAttribute("myScore");
                 String opponentScore = el.getAttribute("opponentScore");
                 String opponent = el.getAttribute("opponent");
 
-                System.out.println("\n=== RESUMO DA PARTIDA ===");
-                System.out.println("Oponente: " + opponent);
-                System.out.println("Teu placar: " + yourScore);
-                System.out.println("Placar adversário: " + opponentScore);
-                System.out.println(isWinner ? " VITÓRIA! " : (yourScore.equals(opponentScore) ? " EMPATE " : " DERROTA "));
-                System.out.println("\nDigite 'menu' para voltar ao menu principal...");
+                String resultado;
+                if(winnerNick.equals(myNickname)) {
+                    resultado = "VITÓRIA";
+                } else if (myScore.equals(opponentScore)) {
+                    resultado = "EMPATE";
+                } else {
+                    resultado = "DERROTA";
+                }
 
-                // Mudar o estado para aguardar comando específico
+                System.out.println("\n=== " + resultado +  " ===");
+                System.out.println("Oponente: " + opponent);
+                System.out.println("Pontuação: " + myScore);
+                System.out.println("Pontuação do adversário: " + opponentScore);
+                System.out.println("\nEscreve 'menu' para voltar ao menu principal...");
+
                 waitingForMenuCommand = true;
       
             }
