@@ -93,6 +93,7 @@ public class ClientHandler extends Thread {
                 case "move" -> handleMove(commandElement);
                 case "stats" -> handleStats(commandElement);
                 case "change_photo" -> handleChangePhoto(commandElement);
+                case "back_to_menu" -> handleBackToMenu();
                 default -> sendErrorResponse("[ERRO] Comando desconhecido");
             }
         } catch (Exception e) {
