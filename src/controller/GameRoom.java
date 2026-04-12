@@ -218,15 +218,37 @@ public class GameRoom {
     }
 
     // Notificar ao jogador que o jogo terminou, e assim referir quem venceu e a pontuação do jogador e seu oponente
-    private void notifyGameEndToPlayer(ClientHandler player, Player winner, int playerScore, int opponentScore, String opponentName) {
+    private void notifyGameEndToPlayer(ClientHandler player, Player winner, int playerScore,
+                                       int opponentScore, String opponentName) {
         Document doc = createBaseDocument();
         Element gameEnd = doc.createElement("gameEnd");
         gameEnd.setAttribute("status", "finished");
-        gameEnd.setAttribute("winner", winner.getNickname());
+        gameEnd.setAttribute("winner", winner != null ? winner.getNickname() : "Empate");
         gameEnd.setAttribute("myScore", String.valueOf(playerScore));
         gameEnd.setAttribute("opponentScore", String.valueOf(opponentScore));
         gameEnd.setAttribute("opponent", opponentName);
         doc.getDocumentElement().appendChild(gameEnd);
         player.sendValidatedXML(doc);
+    }
+
+    public synchronized void handlePlayerLeave(ClientHandler leaving) {
+        ClientHandler remaining = (leaving == player1) ? player2 : player1;
+        Player remainingPlayer = remaining.getPlayer();
+        Player leavingPlayer = leaving.getPlayer();
+
+        long matchDuration = System.currentTimeMillis() - matchStartTime;
+        updateMatchTime(playerModel1, matchDuration);
+        updateMatchTime(playerModel2, matchDuration);
+
+        // quem saiu perde, quem ficou ganha
+        updatePlayerStats(remainingPlayer, leavingPlayer);
+
+        // notifica o oponente que ganhou
+        notifyGameEndToPlayer(remaining, remainingPlayer,
+                board.getScore(remainingPlayer),
+                board.getScore(leavingPlayer),
+                leaving.getNickname());
+
+        remaining.setGameSession(null);
     }
 }

@@ -103,9 +103,19 @@ public class ClientHandler extends Thread {
 
 
     private void handleBackToMenu() {
-        if (authPlayer != null && currentGame != null) {
+        if (authPlayer != null) {
             // Se ainda estiver num jogo, notifica que está a sair
             System.out.println("[HANDLER] " + authPlayer.getNickname() + " voltou ao menu");
+            // tem de tirar o player do jogo ou da queue
+            Server.removeFromLobby(this);
+
+            if(currentGame != null) {
+                currentGame.handlePlayerLeave(this);
+                currentGame = null;
+            }
+
+            inGame = false;
+
         }
         
         // Resposta simples de confirmação

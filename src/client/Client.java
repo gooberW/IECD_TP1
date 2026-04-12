@@ -7,7 +7,6 @@ import org.w3c.dom.NodeList;
 import utils.XMLMessageBuilder;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.net.*;
 import java.util.HashSet;
@@ -47,44 +46,29 @@ public class Client {
 
             System.out.println("=== Dots & Boxes ===");
 
-            // cria se uma thread para ler do socket
             Thread listener = new Thread(() -> {
                 while (in.hasNextLine()) {
-                    String response = in.nextLine();
-                    processServerMessage(response);
+                    processServerMessage(in.nextLine());
                     System.out.print("> ");
-
                 }
                 System.out.println("\n[CLIENT] Ligação perdida com o servidor.");
                 running = false;
             });
+            listener.setDaemon(true);
             listener.start();
 
             showMenu();
             while (running) {
-                if (waitingForMenuCommand) {
-                    String input = keyboard.nextLine().trim();
-                    if (input.equalsIgnoreCase("menu")) {
-                        out.println(parseInputToXML("menu"));
-                        waitingForMenuCommand = false;
-                        showMenu();
-                        myNickname = "";
-                        occupiedLines.clear();
-                        conqueredBoxes.clear();
-                    } else {
-                        System.out.println("Escreve 'menu' para voltar ao menu principal");
-                    }
+                System.out.print("> ");
+                String input = keyboard.nextLine().trim();
+                if (input.isEmpty()) continue;
+                if (input.equalsIgnoreCase("sair")) break;
+
+                String xml = parseInputToXML(input);
+                if (xml != null) {
+                    out.println(xml);
                 } else {
-                    System.out.print("> ");
-                    String input = keyboard.nextLine().trim();
-                    if (input.equalsIgnoreCase("sair")) break;
-                    
-                    String xml = parseInputToXML(input);
-                    if (xml != null) {
-                        out.println(xml);
-                    } else {
-                        System.out.println("[CLIENT] Comando inválido ou erro ao gerar XML.");
-                    }
+                    System.out.println("[CLIENT] Comando inválido.");
                 }
             }
 

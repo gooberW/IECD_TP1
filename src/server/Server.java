@@ -8,11 +8,6 @@ import java.util.*;
 //servidor concorrente
 public class Server {
     public final static int DEFAULT_PORT = 5025;
-    // usa-se ynchronizedList porque o ArrayList não é thread-safe.
-    // como várias threads (ClientHandlers) podem tentar adicionar ou remover jogadores
-    // ao mesmo tempo, a sincronização evita a corrupção da memória e exceções de modificação.
-    private static final List<ClientHandler> lobby = Collections.synchronizedList(new ArrayList<>());
-
     // ssa-se synchronizedMap pela mesma razão, mas desta vez para não se mexer nos lobbies em simultaneo.
     // o mapa fica | tamanho tabuleiro (int) - [JogadorA, JogadorB, ...] |
     private static final Map<Integer, List<ClientHandler>> lobbies = Collections.synchronizedMap(new HashMap<>());
@@ -56,8 +51,13 @@ public class Server {
     }
 
     public static void removeFromLobby(ClientHandler player) {
-        synchronized (lobby) { // monitor para que nao hajam race conditions
-            lobby.remove(player);
+        synchronized (lobbies) {
+            for (List<ClientHandler> queue : lobbies.values()) {
+                if (queue.remove(player)) {
+                    System.out.println("[LOBBY] " + player.getNickname() + " removido da fila");
+                    break;
+                }
+            }
         }
     }
 
