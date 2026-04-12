@@ -7,6 +7,7 @@ import org.w3c.dom.NodeList;
 import utils.XMLMessageBuilder;
 
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.net.*;
 import java.util.HashSet;
@@ -62,28 +63,18 @@ public class Client {
             showMenu();
             while (running) {
                 if (waitingForMenuCommand) {
-            	    String input = keyboard.nextLine().trim();
-            	    if (input.equalsIgnoreCase("menu")) {
-            	        // Envia comando back_to_menu para o servidor
-            	        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-            	        Element root = doc.createElement("protocol");
-            	        doc.appendChild(root);
-            	        Element back = doc.createElement("back_to_menu");
-            	        root.appendChild(back);
-            	        String xml = XMLMessageBuilder.toString(doc);
-            	        if (xml != null) {
-            	            out.println(xml);
-            	        }
-            	        
-            	        waitingForMenuCommand = false;
-            	        showMenu();
-            	        myNickname = "";
-            	        occupiedLines.clear();
-            	        conqueredBoxes.clear();
-            	    } else {
-            	        System.out.println("Digite 'menu' para voltar ao menu principal");
-            	    }
-                }      else {
+                    String input = keyboard.nextLine().trim();
+                    if (input.equalsIgnoreCase("menu")) {
+                        out.println(parseInputToXML("menu"));
+                        waitingForMenuCommand = false;
+                        showMenu();
+                        myNickname = "";
+                        occupiedLines.clear();
+                        conqueredBoxes.clear();
+                    } else {
+                        System.out.println("Escreve 'menu' para voltar ao menu principal");
+                    }
+                } else {
                     System.out.print("> ");
                     String input = keyboard.nextLine().trim();
                     if (input.equalsIgnoreCase("sair")) break;
@@ -139,7 +130,7 @@ public class Client {
                     action.setAttribute("x2", parts[3]);
                     action.setAttribute("y2", parts[4]);
                     break;
-                case "stats":
+                case "stats", "menu":
                     action.setAttribute("type", "request");
                     break;
                 case "change_photo":
@@ -228,6 +219,9 @@ public class Client {
             }
             else if (tagName.equals("stats")) {
                 displayStats(xml);
+            }
+            else if (tagName.equals("menu")) {
+                showMenu();
             }
 
         } catch (Exception e) {

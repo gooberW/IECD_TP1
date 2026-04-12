@@ -114,8 +114,17 @@
                     </xs:complexType>
                 </xs:element>
 
-                <xs:element name="back_to_menu">
-                    <xs:complexType/>
+                <xs:element name="menu">
+                    <xs:complexType>
+                        <xs:attribute name="type" use="required">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="request"/>
+                                    <xs:enumeration value="response"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:attribute>
+                    </xs:complexType>
                  </xs:element>
 
             </xs:choice>

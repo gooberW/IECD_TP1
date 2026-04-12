@@ -93,7 +93,7 @@ public class ClientHandler extends Thread {
                 case "move" -> handleMove(commandElement);
                 case "stats" -> handleStats(commandElement);
                 case "change_photo" -> handleChangePhoto(commandElement);
-                case "back_to_menu" -> handleBackToMenu();
+                case "menu" -> handleBackToMenu();
                 default -> sendErrorResponse("[ERRO] Comando desconhecido");
             }
         } catch (Exception e) {
@@ -110,9 +110,8 @@ public class ClientHandler extends Thread {
         
         // Resposta simples de confirmação
         Document doc = createBaseDocument();
-        Element resp = doc.createElement("response");
-        resp.setAttribute("status", "success");
-        resp.setAttribute("msg", "Voltou ao menu principal");
+        Element resp = doc.createElement("menu");
+        resp.setAttribute("type", "response");
         doc.getDocumentElement().appendChild(resp);
         sendValidatedXML(doc);
     }
