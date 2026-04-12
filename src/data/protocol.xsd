@@ -114,6 +114,10 @@
                     </xs:complexType>
                 </xs:element>
 
+                <xs:element name="back_to_menu">
+                    <xs:complexType/>
+                 </xs:element>
+
             </xs:choice>
         </xs:complexType>
     </xs:element>
