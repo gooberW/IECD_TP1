@@ -1,20 +1,21 @@
 package server;
 
 import controller.GameRoom;
+import utils.Constants;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
 
 //servidor concorrente
 public class Server {
-    public final static int DEFAULT_PORT = 5025;
     // ssa-se synchronizedMap pela mesma razão, mas desta vez para não se mexer nos lobbies em simultaneo.
     // o mapa fica | tamanho tabuleiro (int) - [JogadorA, JogadorB, ...] |
     private static final Map<Integer, List<ClientHandler>> lobbies = Collections.synchronizedMap(new HashMap<>());
 
     public static void main(String[] args) {
-        try (ServerSocket serverSocket = new ServerSocket(DEFAULT_PORT)) {
-            System.out.println("[SERVIDOR] Servidor a correr no porto: " + DEFAULT_PORT);
+        try (ServerSocket serverSocket = new ServerSocket(Constants.Network.PORT)) {
+            System.out.println("[SERVIDOR] Servidor a correr no porto: " + Constants.Network.PORT);
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("[SERVIDOR] Conexão aceite: " + clientSocket.getRemoteSocketAddress());

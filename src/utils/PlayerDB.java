@@ -14,17 +14,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlayerDB {
+    private static List<Player> cache = null;
 
-    private static final String FILE_PATH = "src/data/players.xml";
-    private static final String SCHEMA_PATH = "src/data/players.xsd";
+    // retorna a cache e so le o disco uma vez
+    private static synchronized List<Player> getCache() {
+        if (cache == null) {
+            cache = loadFromDisk();
+        }
+        return cache;
+    }
+
+    public static synchronized List<Player> load() {
+        return new ArrayList<>(getCache()); // retorna a copia da cache
+    }
+
+    public static synchronized void save(List<Player> players) {
+        cache = new ArrayList<>(players); // atualiza a cache
+        saveToDisk(players);             // depois persiste os dados
+    }
 
     /**
      * Carrega e valida os jogadores contra o XSD.
      */
-    public static List<Player> load() {
+    public static List<Player> loadFromDisk() {
         List<Player> players = new ArrayList<>();
-        File xmlFile = new File(FILE_PATH);
-        File xsdFile = new File(SCHEMA_PATH);
+        File xmlFile = new File(Constants.Paths.PLAYERS_XML);
+        File xsdFile = new File(Constants.Paths.PLAYERS_XSD);
 
         if (!xmlFile.exists()) return players;
 
@@ -68,7 +83,7 @@ public class PlayerDB {
     /**
      * Guarda a lista com Transformer e DOM.
      */
-    public static void save(List<Player> players) {
+    public static void saveToDisk(List<Player> players) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -98,7 +113,7 @@ public class PlayerDB {
 
             DOMSource source = new DOMSource(doc);
 
-            try (PrintWriter writer = new PrintWriter(new FileOutputStream(FILE_PATH))) {
+            try (PrintWriter writer = new PrintWriter(new FileOutputStream(Constants.Paths.PLAYERS_XML))) {
                 StreamResult result = new StreamResult(writer);
                 transformer.transform(source, result);
             }

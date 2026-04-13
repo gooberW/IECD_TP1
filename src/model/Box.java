@@ -22,7 +22,7 @@ public class Box {
      * atribui o dono e retorna true.
      */
     public boolean checkCompleted(Player currentPlayer) {
-        if (owner != null && isClosed()) return false; // Já estava fechada antes
+        if (owner != null) return false; // Já estava fechada antes
 
         if(isClosed()) {
             this.owner = currentPlayer;

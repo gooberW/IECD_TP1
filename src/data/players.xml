@@ -25,10 +25,10 @@
         <password>a</password>
         <age>10</age>
         <nationality>PT</nationality>
-        <photo>photo</photo>
-        <wins>6</wins>
-        <losses>5</losses>
-        <avgTime>16743</avgTime>
+        <photo>base64example</photo>
+        <wins>7</wins>
+        <losses>7</losses>
+        <avgTime>17589</avgTime>
     </player>
     <player>
         <nickname>b</nickname>
@@ -36,9 +36,9 @@
         <age>10</age>
         <nationality>PT</nationality>
         <photo>photo</photo>
-        <wins>5</wins>
-        <losses>7</losses>
-        <avgTime>17543</avgTime>
+        <wins>7</wins>
+        <losses>8</losses>
+        <avgTime>18172</avgTime>
     </player>
     <player>
         <nickname>c</nickname>

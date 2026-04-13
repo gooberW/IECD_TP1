@@ -5,30 +5,35 @@ import java.util.*;
 public class Board {
     private final int gridSize;
     private final Map<String, Line> lines = new HashMap<>();
-    private final List<Box> boxes = new ArrayList<>();
+    private final Box[][] boxes; // melhor performance do que arraylist
+
+    private int playedLines=0;
+    private final int totalLines;
 
     public enum MoveResult { INVALID, CLOSED_BOX, NO_BOX_CLOSED }
 
     public Board(int gridSize) {
         this.gridSize = gridSize;
+        this.totalLines = 2 * gridSize * (gridSize - 1);
+        this.boxes = new Box[gridSize - 1][gridSize - 1];
         generateGraph();
     }
 
     private void generateGraph() {
         for (int i = 0; i < gridSize; i++) {
             for (int j = 0; j < gridSize; j++) {
-                if (j < gridSize - 1) createLine(i, j, i, j + 1); // Horizontal
-                if (i < gridSize - 1) createLine(i, j, i + 1, j); // Vertical
+                if (j < gridSize - 1) createLine(i, j, i, j + 1);
+                if (i < gridSize - 1) createLine(i, j, i + 1, j);
             }
         }
 
         for (int i = 0; i < gridSize - 1; i++) {
             for (int j = 0; j < gridSize - 1; j++) {
-                Line top = getLine(i, j, i, j + 1);
+                Line top    = getLine(i, j, i, j + 1);
                 Line bottom = getLine(i + 1, j, i + 1, j + 1);
-                Line left = getLine(i, j, i + 1, j);
-                Line right = getLine(i, j + 1, i + 1, j + 1);
-                boxes.add(new Box(new Line[]{top, bottom, left, right}, i, j));
+                Line left   = getLine(i, j, i + 1, j);
+                Line right  = getLine(i, j + 1, i + 1, j + 1);
+                boxes[i][j] = new Box(new Line[]{top, bottom, left, right}, i, j);
             }
         }
     }
@@ -40,30 +45,29 @@ public class Board {
         if (realLine == null || realLine.isOccupied()) return MoveResult.INVALID;
 
         realLine.setOccupied(true);
+        playedLines++;
 
-        for (Box box : boxes) {
-            if (box.checkCompleted(player)) return MoveResult.CLOSED_BOX;
+        for (int i = 0; i < gridSize - 1; i++) {
+            for (int j = 0; j < gridSize - 1; j++) {
+                if (boxes[i][j].checkCompleted(player)) {
+                    //playedLines++;
+                    return MoveResult.CLOSED_BOX;
+                }
+            }
         }
         return MoveResult.NO_BOX_CLOSED;
     }
 
     public boolean isGameOver() {
-        long conquistadas = boxes.stream()
-                .filter(box -> box.getOwner() != null)
-                .count();
-
-        int totalPossivel = (gridSize - 1) * (gridSize - 1);
-
-        System.out.println("[DEBUG] Fim de Jogo? " + conquistadas + "/" + totalPossivel + " caixas preenchidas.");
-
-        return conquistadas == totalPossivel;
+        System.out.println("[DEBUG] Linhas disponíveis: " + (totalLines-playedLines));
+        return playedLines == totalLines;
     }
 
     public int getScore(Player player) {
         int score = 0;
-        for (Box box : boxes) {
-            if (box.getOwner() == player) {
-                score++;
+        for (int i = 0; i < gridSize - 1; i++) {
+            for (int j = 0; j < gridSize - 1; j++) {
+                if (boxes[i][j].getOwner() == player) score++;
             }
         }
         return score;
@@ -86,12 +90,7 @@ public class Board {
     }
 
     public Player getBoxOwner(int row, int col) {
-        for (Box b : boxes) {
-            if (b.getRow() == row && b.getCol() == col) {
-                return b.getOwner();
-            }
-        }
-        return null;
+        return boxes[row][col].getOwner();
     }
 
     public int getGridSize() { return gridSize; }

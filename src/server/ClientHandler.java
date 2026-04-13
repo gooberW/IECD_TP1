@@ -31,11 +31,7 @@ public class ClientHandler extends Thread {
     private GameRoom currentGame;
 
     private boolean inGame = false;
-    
     private Player authPlayer = null;
-
-    private static final String XSD_PATH = "src/data/protocol.xsd";
-
     public ClientHandler(Socket socket) {
         this.socket = socket;
     }
@@ -52,7 +48,7 @@ public class ClientHandler extends Thread {
             while (in.hasNextLine()) {
                 String xmlReceived = in.nextLine();
                 // recebe o XML e verifica se é valido
-                if (!XMLValidator.validate(xmlReceived, XSD_PATH)) {
+                if (!XMLValidator.validate(xmlReceived)) {
                     sendErrorResponse("[HANDLER] XML invalido face ao XSD");
                     continue;
                 }
@@ -133,20 +129,15 @@ public class ClientHandler extends Thread {
     private void handleLogin(Element el) {
         String nick = el.getAttribute("nickname");
         String pass = el.getAttribute("password");
-        List<Player> players = PlayerDB.load();
 
         Document doc = createBaseDocument();
         Element resp = doc.createElement("response");
 
-        // procura o jogador na lista
-        Player foundPlayer = findPlayer(players, nick, pass);
-
-        // se encontrar, mete os atributos na resposta a enviar para o cliente
-        if (foundPlayer != null) {
-            this.authPlayer = foundPlayer;
+        Player found = Authenticator.login(nick, pass);
+        if (found != null) {
+            this.authPlayer = found;
             resp.setAttribute("status", "success");
             resp.setAttribute("nickname", nick);
-            resp.setAttribute("wins", String.valueOf(foundPlayer.getTotalWins()));
             resp.setAttribute("msg", "[D&B] Login feito com sucesso");
         } else {
             resp.setAttribute("status", "fail");
@@ -158,68 +149,51 @@ public class ClientHandler extends Thread {
     }
 
     private void handleRegister(Element el) {
-        String nick = el.getAttribute("nickname");
-        List<Player> players = PlayerDB.load();
+        Document doc = createBaseDocument();
+        Element resp = doc.createElement("response");
+
+        boolean success = Authenticator.register(
+                el.getAttribute("nickname"),
+                el.getAttribute("password"),
+                Integer.parseInt(el.getAttribute("age")),
+                el.getAttribute("nationality"),
+                el.getAttribute("photo")
+        );
+
+        resp.setAttribute("status", success ? "success" : "fail");
+        resp.setAttribute("msg", success ? "[D&B] Registado com sucesso" : "[ERRO] Nickname ja existe");
+        doc.getDocumentElement().appendChild(resp);
+        sendValidatedXML(doc);
+    }
+
+    private void handleChangePhoto(Element el) {
+        if (authPlayer == null) { sendErrorResponse("Faz login primeiro!"); return; }
 
         Document doc = createBaseDocument();
         Element resp = doc.createElement("response");
 
-        boolean exists = (findPlayer(players, nick) != null);
-
-        if (exists) {
-            resp.setAttribute("status", "fail");
-            resp.setAttribute("msg", "[ERRO] Nickname ja existe");
-        } else {
-            Player newPlayer = new Player();
-            newPlayer.setNickname(nick);
-            newPlayer.setPassword(el.getAttribute("password"));
-            newPlayer.setAge(Integer.parseInt(el.getAttribute("age")));
-            newPlayer.setNationality(el.getAttribute("nationality"));
-            newPlayer.setProfilePicture(el.getAttribute("photo"));
-
-            players.add(newPlayer);
-            PlayerDB.save(players);
-
-            resp.setAttribute("status", "success");
-            resp.setAttribute("msg", "[D&B] Registado com sucesso");
-        }
-
+        boolean success = Authenticator.changePhoto(authPlayer, el.getAttribute("photo"));
+        resp.setAttribute("status", success ? "success" : "fail");
+        resp.setAttribute("msg", success ? "Foto atualizada com sucesso!" : "Foto inválida!");
         doc.getDocumentElement().appendChild(resp);
         sendValidatedXML(doc);
     }
 
     private void handlePlay(Element el) {
-        if (authPlayer != null) {
-            if (inGame) {
-                sendErrorResponse("Já estás numa partida ativa! Termina o jogo atual primeiro.");
-                return;
-            }
-            int size = 3; // default
-            if (el.hasAttribute("size")) {
-                size = Integer.parseInt(el.getAttribute("size"));
-            }
+        if (authPlayer == null) { sendErrorResponse("Faz login primeiro!"); return; }
+        if (inGame) { sendErrorResponse("Já estás numa partida ativa!"); return; }
 
-            if(size < 2) {
-                sendErrorResponse("Tamanho inválido. O tamanho mínimo para um tabuleiro é 2x2.");
-                return;
-            }
+        int size = el.hasAttribute("size") ? Integer.parseInt(el.getAttribute("size")) : 3;
+        if (size < 2 || size > 10) { sendErrorResponse("Tamanho inválido (2-10)."); return; }
 
-            if(size > 10) {
-                sendErrorResponse("Tamanho inválido. O tamanho máximo para um tabuleiro é 10x10.");
-                return;
-            }
+        Document doc = createBaseDocument();
+        Element resp = doc.createElement("response");
+        resp.setAttribute("status", "success");
+        resp.setAttribute("msg", "Na fila para tabuleiro " + size + "x" + size);
+        doc.getDocumentElement().appendChild(resp);
+        sendValidatedXML(doc);
 
-            Document doc = createBaseDocument();
-            Element resp = doc.createElement("response");
-            resp.setAttribute("status", "success");
-            resp.setAttribute("msg", "Na fila para tabuleiro " + size + "x" + size);
-            doc.getDocumentElement().appendChild(resp);
-            sendValidatedXML(doc);
-
-            Server.joinLobby(this, size);
-        } else {
-            sendErrorResponse("Faz login primeiro!");
-        }
+        LobbyManager.join(this, size);
     }
 
     private void handleMove(Element el) {
@@ -263,36 +237,6 @@ public class ClientHandler extends Thread {
         sendValidatedXML(doc);
     }
 
-    private void handleChangePhoto(Element el) {
-        if (authPlayer == null) {
-            sendErrorResponse("Faz login primeiro!");
-            return;
-        }
-        String newPhoto = el.getAttribute("photo");
-        if (newPhoto == null || newPhoto.trim().isEmpty()) {
-            sendErrorResponse("Foto inválida!");
-            return;
-        }
-        
-        // Atualizar na lista de jogadores
-        List<Player> players = PlayerDB.load();
-        for (Player p : players) {
-            if (p.getNickname().equals(authPlayer.getNickname())) {
-                p.setProfilePicture(newPhoto);
-                this.authPlayer.setProfilePicture(newPhoto);
-                break;
-            }
-        }
-        PlayerDB.save(players);
-        
-        Document doc = createBaseDocument();
-        Element resp = doc.createElement("response");
-        resp.setAttribute("status", "success");
-        resp.setAttribute("msg", "Foto de perfil atualizada com sucesso!");
-        doc.getDocumentElement().appendChild(resp);
-        sendValidatedXML(doc);
-    }
-
     private Document createBaseDocument() {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -317,7 +261,7 @@ public class ClientHandler extends Thread {
     public void sendValidatedXML(Document doc) {
         try {
             String xml = XMLMessageBuilder.toString(doc);
-            if (XMLValidator.validate(xml, XSD_PATH)) {
+            if (XMLValidator.validate(xml)) {
                 if (out != null) {
                     out.println(xml);
                 }
@@ -370,9 +314,19 @@ public class ClientHandler extends Thread {
 
     private void cleanup() {
         System.out.println("[HANDLER] Conexão encerrada: " + getNickname());
-        Server.removeFromLobby(this);
-        try {
-            socket.close();
-        } catch (IOException e) { /* ignore */ }
+        LobbyManager.remove(this);
+
+        if (currentGame != null) {
+            currentGame.handlePlayerLeave(this);
+            currentGame = null;
+        }
+
+        try { socket.close(); } catch (IOException e) { /* ignore */ }
+    }
+
+    public void sendRawXML(String xml) {
+        if (out != null) {
+            out.println(xml);
+        }
     }
 }

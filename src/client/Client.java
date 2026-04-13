@@ -4,6 +4,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import utils.Constants;
 import utils.XMLMessageBuilder;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -22,9 +23,6 @@ import java.util.HashMap;
  * dos comandos inseridos pelo utilizador para o formato XML definido no protocolo.
  */
 public class Client {
-    public final static String DEFAULT_HOST = "localhost";
-    public final static int DEFAULT_PORT = 5025;
-
     private static PrintWriter out; // para onde escreve as mensagens XML
     private static boolean running = true;
     private static String myNickname = "";
@@ -39,7 +37,7 @@ public class Client {
     private static int currentGridSize = 3;
 
     public static void main(String[] args) {
-        try (Socket socket = new Socket(DEFAULT_HOST, DEFAULT_PORT)) {
+        try (Socket socket = new Socket(Constants.Network.HOST, Constants.Network.PORT)) {
             out = new PrintWriter(socket.getOutputStream(), true);
             Scanner in = new Scanner(socket.getInputStream());
             Scanner keyboard = new Scanner(System.in);
@@ -63,6 +61,16 @@ public class Client {
                 String input = keyboard.nextLine().trim();
                 if (input.isEmpty()) continue;
                 if (input.equalsIgnoreCase("sair")) break;
+
+                if (waitingForMenuCommand) {
+                    if (input.equalsIgnoreCase("menu")) {
+                        waitingForMenuCommand = false;
+                        out.println(parseInputToXML("menu"));
+                    } else {
+                        System.out.println("[CLIENT] Escreve 'menu' para voltar ao menu principal.");
+                    }
+                    continue;
+                }
 
                 String xml = parseInputToXML(input);
                 if (xml != null) {

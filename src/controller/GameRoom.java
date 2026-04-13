@@ -7,6 +7,9 @@ import server.ClientHandler;
 import utils.PlayerDB;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import utils.XMLMessageBuilder;
+import utils.XMLValidator;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.util.Random;
 import java.util.List;
@@ -98,9 +101,20 @@ public class GameRoom {
     }
 
     private void broadcastGameState() {
-        Document doc = generateUpdateDocument();
-        player1.sendValidatedXML(doc);
-        player2.sendValidatedXML(doc);
+        try {
+            Document doc = generateUpdateDocument();
+            String xml = XMLMessageBuilder.toString(doc);
+
+            if (!XMLValidator.validate(xml)) {
+                System.err.println("[GAME] XML de estado inválido, não enviado.");
+                return;
+            }
+
+            player1.sendRawXML(xml);
+            player2.sendRawXML(xml);
+        } catch (Exception e) {
+            System.err.println("[GAME] Erro ao serializar estado: " + e.getMessage());
+        }
     }
 
     /**
@@ -122,7 +136,8 @@ public class GameRoom {
                 Player owner = board.getBoxOwner(i, j);
                 if (owner != null) {
                     if (sb.length() > 0) sb.append("|");
-                    sb.append(i).append(",").append(j).append(":").append(owner);
+                    sb.append(i).append(",").append(j).append(":").
+                            append(owner.getNickname());
                 }
             }
         }
@@ -186,22 +201,20 @@ public class GameRoom {
     }
 
     private void updatePlayerStats(Player winner, Player loser) {
-        synchronized (PlayerDB.class) {
-            if (winner != null) winner.addWin();
-            if (loser  != null) loser.addLoss();
-            List<Player> all = PlayerDB.load();
-            for (Player p : all) {
-                if (winner != null && p.getNickname().equals(winner.getNickname())) {
-                    p.setTotalWins(winner.getTotalWins());
-                    p.setAverageTimePerMatch(winner.getAverageTimePerMatch());
-                }
-                if (loser != null && p.getNickname().equals(loser.getNickname())) {
-                    p.setTotalLosses(loser.getTotalLosses());
-                    p.setAverageTimePerMatch(loser.getAverageTimePerMatch());
-                }
+        if (winner != null) winner.addWin();
+        if (loser  != null) loser.addLoss();
+        List<Player> all = PlayerDB.load();
+        for (Player p : all) {
+            if (winner != null && p.getNickname().equals(winner.getNickname())) {
+                p.setTotalWins(winner.getTotalWins());
+                p.setAverageTimePerMatch(winner.getAverageTimePerMatch());
             }
-            PlayerDB.save(all);
+            if (loser != null && p.getNickname().equals(loser.getNickname())) {
+                p.setTotalLosses(loser.getTotalLosses());
+                p.setAverageTimePerMatch(loser.getAverageTimePerMatch());
+            }
         }
+        PlayerDB.save(all);
     }
 
     private void updateMatchTime(Player player, long duration) {
