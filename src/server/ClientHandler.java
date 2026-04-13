@@ -193,7 +193,7 @@ public class ClientHandler extends Thread {
         doc.getDocumentElement().appendChild(resp);
         sendValidatedXML(doc);
 
-        LobbyManager.join(this, size);
+        Server.joinLobby(this, size);
     }
 
     private void handleMove(Element el) {
@@ -314,7 +314,7 @@ public class ClientHandler extends Thread {
 
     private void cleanup() {
         System.out.println("[HANDLER] Conexão encerrada: " + getNickname());
-        LobbyManager.remove(this);
+        Server.removeFromLobby(this);
 
         if (currentGame != null) {
             currentGame.handlePlayerLeave(this);

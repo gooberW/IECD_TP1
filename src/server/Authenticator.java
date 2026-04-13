@@ -1,8 +1,6 @@
 package server;
 
 import model.Player;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import utils.PlayerDB;
 
 import java.util.List;
