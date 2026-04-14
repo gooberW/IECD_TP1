@@ -52,12 +52,22 @@
     </player>
     <player>
         <nickname>gabriel</nickname>
-        <password>gabriel21</password>
+        <password>51692</password>
         <age>20</age>
         <nationality>PT</nationality>
-        <photo>photo</photo>
+        <photo>photo64</photo>
         <wins>0</wins>
+        <losses>2</losses>
+        <avgTime>64756</avgTime>
+    </player>
+    <player>
+        <nickname>tomas</nickname>
+        <password>51560</password>
+        <age>20</age>
+        <nationality>PT</nationality>
+        <photo>photo64</photo>
+        <wins>2</wins>
         <losses>0</losses>
-        <avgTime>0</avgTime>
+        <avgTime>64756</avgTime>
     </player>
 </players>

@@ -135,9 +135,9 @@ public class GameRoom {
             for (int j = 0; j < boxLimit; j++) {
                 Player owner = board.getBoxOwner(i, j);
                 if (owner != null) {
-                    if (sb.length() > 0) sb.append("|");
+                    if (!sb.isEmpty()) sb.append("|");
                     sb.append(i).append(",").append(j).append(":").
-                            append(owner.getNickname());
+                            append(owner.getNickname().charAt(0));
                 }
             }
         }

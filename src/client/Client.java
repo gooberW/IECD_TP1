@@ -281,7 +281,7 @@ public class Client {
     }
 
     private static void drawBoard() {
-        System.out.println("\n--- TABULEIRO ---");
+        System.out.println("\n=== TABULEIRO ===");
         System.out.print("      ");
         for (int j = 0; j < currentGridSize; j++) {
             System.out.print(j + "   ");
