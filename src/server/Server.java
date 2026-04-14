@@ -7,11 +7,12 @@ import java.io.IOException;
 import java.net.*;
 import java.util.*;
 
+import static java.util.Collections.synchronizedMap;
+
 //servidor concorrente
 public class Server {
-    // ssa-se synchronizedMap pela mesma razão, mas desta vez para não se mexer nos lobbies em simultaneo.
-    // o mapa fica | tamanho tabuleiro (int) - [JogadorA, JogadorB, ...] |
-    private static final Map<Integer, List<ClientHandler>> lobbies = Collections.synchronizedMap(new HashMap<>());
+    // o mapa fica | tamanho tabuleiro (int) , [JogadorA, JogadorB, ...] |
+    private static final Map<Integer, List<ClientHandler>> lobbies = synchronizedMap(new HashMap<>());
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(Constants.Network.PORT)) {
